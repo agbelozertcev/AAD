@@ -934,204 +934,170 @@ $Reader=(New-Object System.Xml.XmlNodeReader $xaml)
 $Window=[Windows.Markup.XamlReader]::Load( $Reader )
 
 $xaml.SelectNodes("//*[@*[contains(translate(name(.), 'n', 'N'), 'Name')]]") | ForEach-Object {
-   New-Variable  -Name $_.Name -Value $Window.FindName($_.Name) -Force -ErrorAction SilentlyContinue
+     New-Variable  -Name $_.Name -Value $Window.FindName($_.Name) -Force -ErrorAction SilentlyContinue
 }
 
 $window.Add_MouseDoubleClick({
-    
-   $window.set_windowstate("Normal")
+     $window.set_windowstate("Normal")
 }) 
 
 $Window.Add_MouseLeftButtonDown({
-
-    $window.DragMove()
-
+     $window.DragMove()
 })
 
 $Window.Add_Loaded({
-    $Main_grd.Visibility   = "Visible"
-    $Users_grd.Visibility  = "Hidden"
-    $Groups_grd.Visibility = "Hidden"
-
-    $Groups_lv.Visibility  = "Hidden"
-    $USers_lv.Visibility  = "Hidden"
-
-    $Notif_lb.Visibility  = "Hidden"
-    $Add_btn.Visibility  = "Hidden"
-    $Remove_btn.Visibility  = "Hidden"
-
+     $Main_grd.Visibility    = "Visible"
+     $Users_grd.Visibility   = "Hidden"
+     $Groups_grd.Visibility  = "Hidden"
+     $Groups_lv.Visibility   = "Hidden"
+     $USers_lv.Visibility    = "Hidden"
+     $Notif_lb.Visibility    = "Hidden"
+     $Add_btn.Visibility     = "Hidden"
+     $Remove_btn.Visibility  = "Hidden"
 }) 
 
 $Exit_btn.Add_Click({
-  
-   $window.Close()
-
-   Remove-Variable * -ErrorAction SilentlyContinue
-   Remove-Module * 
-   $error.Clear()
+     $window.Close()
+     Remove-Variable * -ErrorAction SilentlyContinue
+     Remove-Module * 
+     $error.Clear()
 })
 
 $Min_btn.Add_Click({
-    $window.set_windowstate("Minimized")
+     $window.set_windowstate("Minimized")
 })
 
 $Max_btn.Add_Click({
-    $window.set_windowstate("Maximized")
+     $window.set_windowstate("Maximized")
 })
 
 $Main_Btn.Add_Click({
-    $Main_grd.Visibility   = "Visible"
-    $Users_grd.Visibility  = "Hidden"
-    $Groups_grd.Visibility = "Hidden"
+     $Main_grd.Visibility   = "Visible"
+     $Users_grd.Visibility  = "Hidden"
+     $Groups_grd.Visibility = "Hidden"
 })
 
 $Users_Btn.Add_Click({
-    $Main_grd.Visibility   = "Hidden"
-    $Users_grd.Visibility  = "Visible"
-    $Groups_grd.Visibility = "Hidden"
-
+     $Main_grd.Visibility   = "Hidden"
+     $Users_grd.Visibility  = "Visible"
+     $Groups_grd.Visibility = "Hidden"
 })
 
 $Groups_Btn.Add_Click({
-    $Main_grd.Visibility   = "Hidden"
-    $Users_grd.Visibility  = "Hidden"
-    $Groups_grd.Visibility = "Visible"
+     $Main_grd.Visibility   = "Hidden"
+     $Users_grd.Visibility  = "Hidden"
+     $Groups_grd.Visibility = "Visible"
 })
 
 $Login_Btn.Add_Click({
 
-   #[System.Windows.MessageBox]::Show('Computer found: ', 'Find in Active Directory','OK','Information')
+    if($global:authToken){
 
-   if($global:authToken){
+         $DateTime = (Get-Date).ToUniversalTime()
+         $TokenExpires = ($authToken.ExpiresOn.datetime - $DateTime).Minutes
 
-      $DateTime = (Get-Date).ToUniversalTime()
-      $TokenExpires = ($authToken.ExpiresOn.datetime - $DateTime).Minutes
+         if($TokenExpires -le 0){
 
-      if($TokenExpires -le 0){
+             [System.Windows.MessageBox]::Show('Authentication Token expired ' +  $TokenExpires + 'minutes ago' , 'Authentication Token expired','OK','Information')
 
-         [System.Windows.MessageBox]::Show('Authentication Token expired ' +  $TokenExpires + 'minutes ago' , 'Authentication Token expired','OK','Information')
+             if($Login_tb.Text -eq $null -or $Login_tb.Text -eq ""){
 
+                 [System.Windows.MessageBox]::Show('Please specify your user principal name for Azure Authentication' , 'Wrong UPN','OK','Information')
+             }
+             else{
+
+                 $global:authToken = Get-AuthToken -User $(($Login_tb.Text).Trim())
+             }
+         } 
+     }
+     else{
          if($Login_tb.Text -eq $null -or $Login_tb.Text -eq ""){
 
-            [System.Windows.MessageBox]::Show('Please specify your user principal name for Azure Authentication' , 'Wrong UPN','OK','Information')
- 
-          }
-          else{
+              [System.Windows.MessageBox]::Show('Please specify your user principal name for Azure Authentication' , 'Wrong UPN','OK','Information')
+         }
+         else{
 
              $global:authToken = Get-AuthToken -User $(($Login_tb.Text).Trim())
-          }
-       } 
-       
+         }
      }
-   else{
-
-       if($Login_tb.Text -eq $null -or $Login_tb.Text -eq ""){
-          [System.Windows.MessageBox]::Show('Please specify your user principal name for Azure Authentication' , 'Wrong UPN','OK','Information')
-       }
-       else{
-
-           $global:authToken = Get-AuthToken -User $(($Login_tb.Text).Trim())
-       }
-
-
-    if ($global:authToken){
-
-        #$Footer_tb.Text = "Azure Authentication is successful"
-
-    }
-    else{
-
-        #$Footer_tb.Text = "Azure Authentication is failed"
-    }
-
-  }
     
-  $Users = Get-AADUser
-  $Groups = Get-AADGroup
+ $Users = Get-AADUser
+ $Groups = Get-AADGroup
 
-  #$Footer_tb.Text = "Data collection..."
+ $USers | Select-Object @{name="Id";ex={$_.id}},@{ name="UserName";ex={$_.Displayname}},@{ name="UPN";ex={$_.userprincipalname}} | ForEach-Object {$Users_lv.addchild($_)}
 
-  $USers | Select-Object @{name="Id";ex={$_.id}},@{ name="UserName";ex={$_.Displayname}},@{ name="UPN";ex={$_.userprincipalname}} | ForEach-Object {$Users_lv.addchild($_)}
-
-  $Groups | Select-Object @{name="Id";ex={$_.id}},@{name="GroupName";ex={$_.Displayname}}, @{ name="isOnPrem";ex={if($_.onPremisesDomainName){"True"}else{"False"}}} ,@{ name="Mail";ex={$_.mail}}| ForEach-Object {$Groups_lv.addchild($_)}
+ $Groups | Select-Object @{name="Id";ex={$_.id}},@{name="GroupName";ex={$_.Displayname}}, @{ name="isOnPrem";ex={if($_.onPremisesDomainName){"True"}else{"False"}}} ,@{ name="Mail";ex={$_.mail}}| ForEach-Object {$Groups_lv.addchild($_)}
   
-  $Groups_lv.Visibility  = "Visible"
-  $USers_lv.Visibility   = "Visible"
-
-  $Notif_lb.Visibility   = "Visible"
-  $Add_btn.Visibility    = "Visible"
-  $Remove_btn.Visibility = "Visible"
-     
-})
+ $Groups_lv.Visibility  = "Visible"
+ $USers_lv.Visibility   = "Visible"
+ $Notif_lb.Visibility   = "Visible"
+ $Add_btn.Visibility    = "Visible"
+ $Remove_btn.Visibility = "Visible"
+ })
 
 $Add_btn.Add_Click({
 
-   if(!($Users_lv.SelectedItems)){
-        [System.Windows.MessageBox]::Show('No user selected' , 'No user selected','OK','Information')
-   }
-   else{
+     if(!($Users_lv.SelectedItems)){
 
-      if(!($Groups_lv.SelectedItems)){
-         [System.Windows.MessageBox]::Show('No group selected' , 'No group selected','OK','Information')
-      }
-      else{
-            
-            foreach($User in $Users_lv.SelectedItems){
-            
-                foreach($Group in $Groups_lv.SelectedItems){
+         [System.Windows.MessageBox]::Show('No user selected' , 'No user selected','OK','Information')
+     }
+     else{
+         if(!($Groups_lv.SelectedItems)){
 
-                    $isMember = Get-AADGroup -GroupName $Group.GroupName -Members | Where-Object {$_.id -eq $User.id}
+             [System.Windows.MessageBox]::Show('No group selected' , 'No group selected','OK','Information')
 
-                    if (!($isMember)){
-                        Add-AADGroupMember -GroupId $Group.id -AADMemberId $User.id
-                        Show-Toast -Title "The AAD object has been changed" -Message "$($User.UserName) was added into '$($Group.GroupName)' AAD group."
-                    }
-                    else{
-                        Show-Toast -Title "The AAD object hasn't been changed" -Message "$($User.UserName) is already in the '$($Group.GroupName)' AAD group."
-                    }
-                }
+         }
+         else{
+           
+             foreach($User in $Users_lv.SelectedItems){
             
-            } 
+                 foreach($Group in $Groups_lv.SelectedItems){
 
-            
-      }
-   }
+                     $isMember = Get-AADGroup -GroupName $Group.GroupName -Members | Where-Object {$_.id -eq $User.id}
+
+                     if (!($isMember)){
+                         Add-AADGroupMember -GroupId $Group.id -AADMemberId $User.id
+                         Show-Toast -Title "The AAD object has been changed" -Message "$($User.UserName) was added into '$($Group.GroupName)' AAD group."
+                     }
+                     else{
+                         Show-Toast -Title "The AAD object hasn't been changed" -Message "$($User.UserName) is already in the '$($Group.GroupName)' AAD group."
+                     }
+                 }
+             } 
+         }
+     }
 })
 
 $Remove_btn.Add_Click({
 
-   if(!($Users_lv.SelectedItems)){
-        [System.Windows.MessageBox]::Show('No user selected' , 'No user selected','OK','Information')
-   }
-   else{
+     if(!($Users_lv.SelectedItems)){
+         [System.Windows.MessageBox]::Show('No user selected' , 'No user selected','OK','Information')
+     }
+     else{
 
-      if(!($Groups_lv.SelectedItems)){
-         [System.Windows.MessageBox]::Show('No group selected' , 'No group selected','OK','Information')
-      }
-      else{
+         if(!($Groups_lv.SelectedItems)){
+             [System.Windows.MessageBox]::Show('No group selected' , 'No group selected','OK','Information')
+         }
+         else{
             
-            foreach($User in $Users_lv.SelectedItems){
+             foreach($User in $Users_lv.SelectedItems){
             
-                foreach($Group in $Groups_lv.SelectedItems){
+                 foreach($Group in $Groups_lv.SelectedItems){
 
                     $isMember = Get-AADGroup -GroupName $Group.GroupName -Members | Where-Object {$_.id -eq $User.id}
 
-                    if ($isMember){
-                        Remove-AADGroupMember -GroupId $Group.id -AADMemberId $User.id
-                        Show-Toast -Title "The AAD object has been changed" -Message "$($User.UserName) was removed from the '$($Group.GroupName)' AAD group"
+                     if ($isMember){
 
-                    }
-                    else{
-                        Show-Toast -Title "The AAD object hasn't been changed" -Message "$($User.UserName) hasn't found in the '$($Group.GroupName)' AAD group."
-                    }
-                }
-            
-            } 
-
-            
-      }
-   }
+                         Remove-AADGroupMember -GroupId $Group.id -AADMemberId $User.id
+                         Show-Toast -Title "The AAD object has been changed" -Message "$($User.UserName) was removed from the '$($Group.GroupName)' AAD group"
+                     }
+                     else{
+                          Show-Toast -Title "The AAD object hasn't been changed" -Message "$($User.UserName) hasn't found in the '$($Group.GroupName)' AAD group."
+                     }
+                 }
+             } 
+         }
+     }
 })
 
 $window.ShowDialog() | Out-Null
-
