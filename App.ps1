@@ -517,7 +517,8 @@ function New-Chart() {
     param(
         [hashtable]$Params,
         [string]$ChartTitle,
-        [System.Windows.Forms.DataVisualization.Charting.SeriesChartType]$Type
+        [System.Windows.Forms.DataVisualization.Charting.SeriesChartType]$Type,
+        $PieLabelStyle = "Outside"
     )
  
     #Create our chart object
@@ -535,15 +536,15 @@ function New-Chart() {
     #Add a datapoint for each value specified in the parameter hash table
     $Params.GetEnumerator() | ForEach-Object {
         $datapoint = new-object System.Windows.Forms.DataVisualization.Charting.DataPoint(0, $_.Value.Value)
-        $datapoint.AxisLabel = "$($_.Value.Header)" + "(" + $($_.Value.Value) + " )"
+        $datapoint.AxisLabel = "$($_.Value.Header)" + " (" + $($_.Value.Value) + ")"
         $Chart.Series["Data"].Points.Add($datapoint)
     }
  
     $Chart.Series["Data"].ChartType = [System.Windows.Forms.DataVisualization.Charting.SeriesChartType]::$Type
-    $Chart.Series["Data"]["PieLabelStyle"] = "Outside"
+    $Chart.Series["Data"]["PieLabelStyle"] = $PieLabelStyle
     $Chart.Series["Data"].Font = "Segoe UI, 9pt"
     $Chart.Series["Data"]["PieLineColor"] = "Black"
-    $Chart.Series["Data"]["PieDrawingStyle"] = "Concave"
+    $Chart.Series["Data"]["PieDrawingStyle"] = "Default" #"Concave"
     ($Chart.Series["Data"].Points.FindMaxByValue())["Exploded"] = $true
  
     $Title = new-object System.Windows.Forms.DataVisualization.Charting.Title
@@ -603,6 +604,14 @@ function New-Chart() {
          <!-- <Setter Property="FontFamily" Value="Microsoft Sans Serif Regular" /> --> 
          <Setter Property="FontFamily" Value="Segoe UI" />      
      </Style> 
+
+     <Style x:Key="ListViewItemStretchStyle" TargetType="ListViewItem">
+         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+     </Style>
+ 
+     <Style x:Key="ListBoxItemStretchStyle" TargetType="ListBoxItem">
+         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+     </Style>    
 
 <!-- ******************** Window Border Style ****************************** --> 
 
@@ -938,22 +947,23 @@ function New-Chart() {
 
  <!-- ********************** _Main grid End of Login part ********************-->
 
- <!-- ********************** _Main grid Details ********************-->
+ <!-- ********************** _Main grid Details ShowGridLines="True"********************-->
 
- <Grid Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" ShowGridLines="True" >
+ <Grid Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"  >
      <Grid.RowDefinitions>
          <RowDefinition />
          <RowDefinition />
      </Grid.RowDefinitions>
-         <Grid.ColumnDefinitions>
+     <Grid.ColumnDefinitions>
+         <ColumnDefinition />
          <ColumnDefinition />
          <ColumnDefinition />
      </Grid.ColumnDefinitions>
 
      
-     <Image Grid.Row="0" Grid.Column="1" x:Name="Chart_usr" />
+     <Image Grid.Row="1" Grid.Column="0" x:Name="Chart_usr" /> 
      <Image Grid.Row="1" Grid.Column="1" x:Name="Chart_grp" />
-     <Image Grid.Row="1" Grid.Column="0" x:Name="Chart_dev" />
+     <Image Grid.Row="1" Grid.Column="2" x:Name="Chart_dev" />
      
 
 
@@ -1049,15 +1059,18 @@ function New-Chart() {
          <ListView.View>
                  <GridView>
                      <GridView.Columns>
-                         <GridViewColumn>
+                         <GridViewColumn Width="30">
+                             <GridViewColumn.Header>
+                                 <CheckBox x:Name="Users_lv_SelectAll" HorizontalAlignment="Center" VerticalAlignment="Center" IsThreeState="False" />
+                             </GridViewColumn.Header>
                              <GridViewColumn.CellTemplate>
                                  <DataTemplate>
                                      <CheckBox Tag="{Binding ID}" IsChecked="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListViewItem}}, Path=IsSelected}" Style="{StaticResource CheckBoxTemplate}"/>  
                                  </DataTemplate>
                              </GridViewColumn.CellTemplate>
                          </GridViewColumn>
-                         <GridViewColumn DisplayMemberBinding="{Binding UserName}" Header="User Name" />
-                         <GridViewColumn DisplayMemberBinding="{Binding UPN}" Header="UPN" />
+                         <GridViewColumn DisplayMemberBinding="{Binding UserName}" Header="User Name" Width="170"/>
+                         <GridViewColumn DisplayMemberBinding="{Binding UPN}" Header="UPN" Width="250"/>
                      </GridView.Columns>
                  </GridView>
          </ListView.View>
@@ -1065,7 +1078,7 @@ function New-Chart() {
 
  <!-- -->
 
-     <ListView x:Name="Groups_lv" Grid.Column="1"  FontSize="12" ItemsSource="{Binding}" IsSynchronizedWithCurrentItem="True" ScrollViewer.CanContentScroll="True"  HorizontalAlignment="Stretch" VerticalAlignment="Top">
+     <ListView x:Name="Groups_lv" Grid.Column="1"  FontSize="12" ItemsSource="{Binding}" IsSynchronizedWithCurrentItem="True" ScrollViewer.CanContentScroll="True"  >
          <ListView.Resources>
                  <Style TargetType="{x:Type GridViewColumnHeader}">
                  <Setter Property="HorizontalContentAlignment" Value="Left"/>
@@ -1087,16 +1100,19 @@ function New-Chart() {
                  </GridView.ColumnHeaderContextMenu>
 
                  <GridView.Columns>
-                     <GridViewColumn>
+                     <GridViewColumn Width="30">
+                         <GridViewColumn.Header>
+                             <CheckBox x:Name="Groups_lv_SelectAll" HorizontalAlignment="Center" VerticalAlignment="Center" IsThreeState="False" />
+                         </GridViewColumn.Header>                     
                          <GridViewColumn.CellTemplate>
                              <DataTemplate>
                                  <CheckBox Tag="{Binding ID}" IsChecked="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListViewItem}}, Path=IsSelected}" Style="{StaticResource CheckBoxTemplate}"/>  
                              </DataTemplate>
                          </GridViewColumn.CellTemplate>
                      </GridViewColumn>
-                         <GridViewColumn DisplayMemberBinding="{Binding GroupName}" Header="Group Name" />
-                         <GridViewColumn DisplayMemberBinding="{Binding isOnPrem}"  Header="isOnPrem" />
-                         <GridViewColumn Header="Mail">
+                         <GridViewColumn DisplayMemberBinding="{Binding GroupName}" Header="Group Name" Width="170"/>
+                         <GridViewColumn DisplayMemberBinding="{Binding isOnPrem}"  Header="isOnPrem" Width="70"/>
+                         <GridViewColumn Header="Mail" Width="250">
                          <GridViewColumn.CellTemplate>
                              <DataTemplate>
                                  <TextBlock Text="{Binding Mail}" TextDecorations="Underline" Foreground="Blue" Cursor="Hand" />
@@ -1206,7 +1222,7 @@ function New-Chart() {
 
  <!-- -->
 
-     <ListView x:Name="Devices_lv" Grid.Column="0" Margin="0,0,5,0" FontSize="12" ItemsSource="{Binding}" IsSynchronizedWithCurrentItem="True">
+     <ListView x:Name="Devices_lv" Grid.Column="0" Margin="0,0,5,0" FontSize="12" ItemsSource="{Binding}" IsSynchronizedWithCurrentItem="True" >
          <ListView.Resources>
              <Style TargetType="{x:Type GridViewColumnHeader}">
                  <Setter Property="HorizontalContentAlignment" Value="Left"/>
@@ -1214,24 +1230,27 @@ function New-Chart() {
                  <Setter Property="Foreground" Value="White"/>
                  <Setter Property="Padding" Value="5,5,5,5"/>
                  <Setter Property="FontSize" Value="14"/>
-             </Style>
+              </Style>
          </ListView.Resources>
 
          <ListView.View>
                  <GridView>
                      <GridView.Columns>
-                         <GridViewColumn>
+                         <GridViewColumn Width="30">
+                             <GridViewColumn.Header>
+                                 <CheckBox x:Name="Devices_lv_SelectAll" HorizontalAlignment="Center" VerticalAlignment="Center" IsThreeState="False" />
+                             </GridViewColumn.Header>   
                              <GridViewColumn.CellTemplate>
                                  <DataTemplate>
                                      <CheckBox Tag="{Binding ID}" IsChecked="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListViewItem}}, Path=IsSelected}" Style="{StaticResource CheckBoxTemplate}"/>  
                                  </DataTemplate>
                              </GridViewColumn.CellTemplate>
                          </GridViewColumn>
-                         <GridViewColumn DisplayMemberBinding="{Binding DeviceName}" Header="Device Name" />
+                         <GridViewColumn DisplayMemberBinding="{Binding DeviceName}" Header="Device Name" Width="110"/>
                          <GridViewColumn DisplayMemberBinding="{Binding isMDM}" Header="IsMDM" />
-                         <GridViewColumn DisplayMemberBinding="{Binding OS}" Header="OS" />
-                         <GridViewColumn DisplayMemberBinding="{Binding Version}" Header="Version" />
-                         <GridViewColumn DisplayMemberBinding="{Binding LastSign}" Header="Lastsign" />
+                         <GridViewColumn DisplayMemberBinding="{Binding OS}" Header="OS" Width="70"/>
+                         <GridViewColumn DisplayMemberBinding="{Binding Version}" Header="Version" Width="100" />
+                         <GridViewColumn DisplayMemberBinding="{Binding LastSign}" Header="Lastsign" Width="130"/>
                      </GridView.Columns>
                  </GridView>
          </ListView.View>
@@ -1263,16 +1282,19 @@ function New-Chart() {
                  </GridView.ColumnHeaderContextMenu>
 
                  <GridView.Columns >
-                     <GridViewColumn>
+                     <GridViewColumn Width="30">
+                         <GridViewColumn.Header>
+                             <CheckBox x:Name="Groups_lv_d_SelectAll" HorizontalAlignment="Center" VerticalAlignment="Center" IsThreeState="False" />
+                         </GridViewColumn.Header>   
                          <GridViewColumn.CellTemplate>
                              <DataTemplate>
                                  <CheckBox Tag="{Binding ID}" IsChecked="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListViewItem}}, Path=IsSelected}" Style="{StaticResource CheckBoxTemplate}"/>  
                              </DataTemplate>
                          </GridViewColumn.CellTemplate>
                      </GridViewColumn>
-                         <GridViewColumn DisplayMemberBinding="{Binding GroupName}" Header="Group Name" />
-                         <GridViewColumn DisplayMemberBinding="{Binding isOnPrem}"  Header="isOnPrem" />
-                         <GridViewColumn Header="Mail">
+                         <GridViewColumn DisplayMemberBinding="{Binding GroupName}" Header="Group Name" Width="170"/>
+                         <GridViewColumn DisplayMemberBinding="{Binding isOnPrem}"  Header="isOnPrem" Width="70"/>
+                         <GridViewColumn Header="Mail" Width="250">
                          <GridViewColumn.CellTemplate>
                              <DataTemplate>
                                  <TextBlock Text="{Binding Mail}" TextDecorations="Underline" Foreground="Blue" Cursor="Hand" />
@@ -1365,6 +1387,7 @@ $Window.Add_Loaded({
      $Users_Btn.IsEnabled     = $False
      $Devices_Btn.Opacity     = "0.2"
      $Users_Btn.Opacity       = "0.2"
+     $Login_tb.Text = "admin@M365x898520.onmicrosoft.com"
 }) 
 
 $Exit_btn.Add_Click({
@@ -1408,6 +1431,8 @@ $Devices_Btn.Add_Click({
 })
 
 $Login_Btn.Add_Click({
+
+    
 
     if($global:authToken){
 
@@ -1483,16 +1508,27 @@ $Login_Btn.Add_Click({
          $Params_dev.nMDMDevices.Header = "AAD joined"
          $Params_dev.nMDMDevices.Value = ($Devices | Where-Object {$null -eq $_.mdmAppId}).Count
 
-         $Params_usr.Useer = @{}
-         $Params_usr.Header = "Users" 
-         $Params_usr.Value = $Users.Count
+         $Params_usr.User = @{}
+         $Params_usr.User.Header = "Users" 
+         $Params_usr.User.Value =  $Users.Count
+
+         $Params_grp.AADGroup = @{}
+         $Params_grp.AADGroup.Header = "AAD Groups" 
+         $Params_grp.AADGroup.Value =  ($Groups | Where-Object {$null -eq $_.onPremisesDomainName}).Count
+         $Params_grp.ADGroup = @{}
+         $Params_grp.ADGroup.Header = "AD Groups" 
+         $Params_grp.ADGroup.Value =  ($Groups | Where-Object {$null -ne $_.onPremisesDomainName}).Count
+
 
          $script:hash = @{}
          New-Chart $Params_dev -ChartTitle "Azure AD devices ($($Devices.Count)) - total " -Type Pie
          $Chart_dev.Source = $script:hash.Stream
          $script:hash = @{}
-         #New-Chart $Params_usr -ChartTitle "AAD users ($($Users.Count)) - total " -Type Column
-         #$Chart_usr.Source = $script:hash.Stream
+         New-Chart $Params_usr -ChartTitle "AAD users ($($Users.Count)) - total " -Type Column -PieLabelStyle "Inside"
+         $Chart_usr.Source = $script:hash.Stream
+         $script:hash = @{}
+         New-Chart $Params_grp -ChartTitle "AAD groups ($($Groups.Count)) - total " -Type Pie -PieLabelStyle "Outside"
+         $Chart_grp.Source = $script:hash.Stream
 
      }
 
