@@ -406,6 +406,84 @@ function Get-AADDevice(){
         }
 }
 
+function Get-TennatInfo(){
+  
+        try {
+        
+            $uri = "https://graph.microsoft.com/v1.0/organization"
+    
+            (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).value 
+ 
+        }
+    
+        catch {
+    
+        $ex = $_.Exception
+        $errorResponse = $ex.Response.GetResponseStream()
+        $reader = New-Object System.IO.StreamReader($errorResponse)
+        $reader.BaseStream.Position = 0
+        $reader.DiscardBufferedData()
+        $responseBody = $reader.ReadToEnd();
+        Write-Host "Response content:`n$responseBody" -f Red
+        Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
+        write-host
+        [System.Windows.MessageBox]::Show('Get-TennatInfo  ' + $responseBody , 'Request failed','OK','Error')
+    
+        }
+}
+
+function Get-Registration(){
+  
+    try {
+    
+        $uri = "https://graph.microsoft.com/beta/reports/getCredentialUserRegistrationCount"
+
+        (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).value 
+
+    }
+
+    catch {
+
+    $ex = $_.Exception
+    $errorResponse = $ex.Response.GetResponseStream()
+    $reader = New-Object System.IO.StreamReader($errorResponse)
+    $reader.BaseStream.Position = 0
+    $reader.DiscardBufferedData()
+    $responseBody = $reader.ReadToEnd();
+    Write-Host "Response content:`n$responseBody" -f Red
+    Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
+    write-host
+    [System.Windows.MessageBox]::Show('Get-RegistrationInfo  ' +$responseBody , 'Request failed','OK','Error')
+   
+
+    }
+}
+
+function Get-Subscription(){
+  
+    try {
+    
+        $uri = "https://graph.microsoft.com/beta/subscribedSkus"
+
+        (Invoke-RestMethod -Uri $uri -Headers $authToken -Method Get).value 
+
+    }
+
+    catch {
+
+    $ex = $_.Exception
+    $errorResponse = $ex.Response.GetResponseStream()
+    $reader = New-Object System.IO.StreamReader($errorResponse)
+    $reader.BaseStream.Position = 0
+    $reader.DiscardBufferedData()
+    $responseBody = $reader.ReadToEnd();
+    Write-Host "Response content:`n$responseBody" -f Red
+    Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
+    [System.Windows.MessageBox]::Show('Get-Subscription  ' +$responseBody , 'Request failed','OK','Error')
+
+    }
+}
+
 function Get-ManagedDevices(){
 
        
@@ -474,8 +552,7 @@ function Get-ManagedDevices(){
         break
     
         }
-    
-    }
+}
     
 function Show-Toast{
 
@@ -518,7 +595,8 @@ function New-Chart() {
         [hashtable]$Params,
         [string]$ChartTitle,
         [System.Windows.Forms.DataVisualization.Charting.SeriesChartType]$Type,
-        $PieLabelStyle = "Outside"
+        $PieLabelStyle = "Outside",
+        $Color = 'Black'
     )
  
     #Create our chart object
@@ -531,6 +609,7 @@ function New-Chart() {
     #Create a chartarea to draw on and add this to the chart
     $ChartArea = New-Object System.Windows.Forms.DataVisualization.Charting.ChartArea
     $Chart.ChartAreas.Add($ChartArea)
+    $Chart.ChartAreas[0].Area3DStyle.Enable3D = "True"
     [void]$Chart.Series.Add("Data") 
  
     #Add a datapoint for each value specified in the parameter hash table
@@ -544,6 +623,7 @@ function New-Chart() {
     $Chart.Series["Data"]["PieLabelStyle"] = $PieLabelStyle
     $Chart.Series["Data"].Font = "Segoe UI, 9pt"
     $Chart.Series["Data"]["PieLineColor"] = "Black"
+    $Chart.Series["Data"].LabelForeColor = $Color
     $Chart.Series["Data"]["PieDrawingStyle"] = "Default" #"Concave"
     ($Chart.Series["Data"].Points.FindMaxByValue())["Exploded"] = $true
  
@@ -949,9 +1029,10 @@ function New-Chart() {
 
  <!-- ********************** _Main grid Details ShowGridLines="True"********************-->
 
- <Grid Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"  >
+ <Grid x:Name="Dash_grd" Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"  >
      <Grid.RowDefinitions>
          <RowDefinition />
+         <RowDefinition Height="0.3*"/>
          <RowDefinition />
      </Grid.RowDefinitions>
      <Grid.ColumnDefinitions>
@@ -961,9 +1042,56 @@ function New-Chart() {
      </Grid.ColumnDefinitions>
 
      
-     <Image Grid.Row="1" Grid.Column="0" x:Name="Chart_usr" /> 
-     <Image Grid.Row="1" Grid.Column="1" x:Name="Chart_grp" />
-     <Image Grid.Row="1" Grid.Column="2" x:Name="Chart_dev" />
+     <Grid x:Name="Overview_grd" Grid.Row="0" Grid.Column="0" >
+         <Grid.RowDefinitions>
+             <RowDefinition />
+             <RowDefinition />
+             <RowDefinition />
+             <RowDefinition />
+             <RowDefinition />
+          </Grid.RowDefinitions>
+         <Grid.ColumnDefinitions>
+             <ColumnDefinition Width="0.35*"/>
+             <ColumnDefinition />
+         </Grid.ColumnDefinitions>  
+        
+         <Label Grid.Row="0" Grid.Column="0" Content="Overview" FontSize="17" HorizontalAlignment="Left"  VerticalAlignment="Center" />
+         <Label x:Name="Company_lb" Grid.Row="1" Grid.Column="0" FontSize="20" HorizontalAlignment="Left" VerticalAlignment="Center" FontWeight="Bold"/>
+         <Label Grid.Row="2" Grid.Column="0" Content="Tennant:" FontSize="15" HorizontalAlignment="Left"  VerticalAlignment="Center"/>
+         <Label Grid.Row="3" Grid.Column="0" Content="Tennant ID:" FontSize="15" HorizontalAlignment="Left"  VerticalAlignment="Center"/>
+         <Label Grid.Row="4" Grid.Column="0" Content="Capabilities:" FontSize="15" HorizontalAlignment="Left"  VerticalAlignment="Center"/>
+         <Label x:Name="Tennant_lb" Grid.Row="2" Grid.Column="1"  FontSize="15" HorizontalAlignment="Left"  VerticalAlignment="Center"/>
+         <Label x:Name="Tennantid_lb" Grid.Row="3" Grid.Column="1"  FontSize="15" HorizontalAlignment="Left"  VerticalAlignment="Center"/>
+         <Label x:Name="Capabilities_lb" Grid.Row="4" Grid.Column="1"  FontSize="15" HorizontalAlignment="Left"  VerticalAlignment="Center"/>
+
+     </Grid>
+     <Label  Grid.Row="0" Grid.Column="1" Content="Subscribed SKUs" FontSize="17" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="15,3,0,0"/>
+     <Grid Grid.Row="0" Grid.Column="1" ShowGridLines="True" Margin="15,45,5,0">
+     
+        <ListView x:Name="SKU_lv" Grid.Column="0" Margin="0,0,5,0" FontSize="15" Foreground="Black"  ItemsSource="{Binding}" IsSynchronizedWithCurrentItem="True" Panel.ZIndex="1" BorderThickness="0">
+            <ListView.Resources>
+                <Style TargetType="{x:Type GridViewColumnHeader}">
+                     <Setter Property="FontSize" Value="15"/>
+                </Style>
+  
+            </ListView.Resources>
+
+      
+
+             <ListView.View>
+                     <GridView>
+                         <GridView.Columns>
+                             <GridViewColumn DisplayMemberBinding="{Binding SKU}" Header="SKU"  Width="240"/>
+                             <GridViewColumn DisplayMemberBinding="{Binding Enabled}" Header="Enabled" />
+                          </GridView.Columns>
+                     </GridView>
+             </ListView.View>
+         </ListView>       
+     </Grid>
+
+     <Image Grid.Row="2" Grid.Column="0" x:Name="Chart_usr" /> 
+     <Image Grid.Row="2" Grid.Column="1" x:Name="Chart_grp" />
+     <Image Grid.Row="2" Grid.Column="2" x:Name="Chart_dev" />
      
 
 
@@ -1387,6 +1515,9 @@ $Window.Add_Loaded({
      $Users_Btn.IsEnabled     = $False
      $Devices_Btn.Opacity     = "0.2"
      $Users_Btn.Opacity       = "0.2"
+     $Overview_grd.Visibility = "Hidden"
+     $SKU_lv.Visibility       = "Hidden"
+     $Dash_grd.Visibility     = "Hidden"
      $Login_tb.Text = "admin@M365x898520.onmicrosoft.com"
 }) 
 
@@ -1432,7 +1563,6 @@ $Devices_Btn.Add_Click({
 
 $Login_Btn.Add_Click({
 
-    
 
     if($global:authToken){
 
@@ -1466,13 +1596,26 @@ $Login_Btn.Add_Click({
 
      if ( $global:authToken){
 
-        $Users = Get-AADUser
-        $Groups = Get-AADGroup
+         $Props        = (Get-TennatInfo).verifiedDomains | Where-Object {$_.isDefault -eq "True"}
+         $TennantiD    = (Get-TennatInfo).id
+         $CompanyName  = (Get-TennatInfo).displayname
+         $Capabilities = $Props.capabilities
+         $Tennant      = $Props.name
 
-        #$MDevices = Get-ManagedDevices -IncludeEAS
-        $Devices = Get-AADDevice
+         $Company_lb.Content = $CompanyName
+         $Tennant_lb.Content = $Tennant
+         $Tennantid_lb.Content = $TennantiD
+         $Capabilities_lb.Content = $Capabilities
+         
+         $Overview_grd.Visibility = "Visible"
+         #Get-Registration
+
+         $Users = Get-AADUser
+         $Groups = Get-AADGroup
+         #$MDevices = Get-ManagedDevices -IncludeEAS
+         $Devices = Get-AADDevice
        
-        $USers | Select-Object @{name="Id";ex={$_.id}},@{ name="UserName";ex={$_.Displayname}},@{ name="UPN";ex={$_.userprincipalname}} | ForEach-Object {$Users_lv.addchild($_)}
+         $USers | Select-Object @{name="Id";ex={$_.id}},@{ name="UserName";ex={$_.Displayname}},@{ name="UPN";ex={$_.userprincipalname}} | ForEach-Object {$Users_lv.addchild($_)}
        
          $Groups | Select-Object @{name="Id";ex={$_.id}},@{name="GroupName";ex={$_.Displayname}}, @{ name="isOnPrem";ex={if($_.onPremisesDomainName){"True"}else{"False"}}} ,@{ name="Mail";ex={$_.mail}}| ForEach-Object {
              $Groups_lv.addchild($_)
@@ -1486,10 +1629,20 @@ $Login_Btn.Add_Click({
          }    
          #>
          $Devices | Select-Object @{name="Id";ex={$_.id}},@{name="DeviceName";ex={$_.displayName}}, @{ name="isMDM";ex={if($_.mdmAppId){"True"}else{"False"}}}, 
-         @{ name="OS";ex={$_.operatingSystem}}, @{ name="Version";ex={$_.operatingSystemVersion}}, @{ name="LastSign";ex={$_.approximateLastSignInDateTime}} | ForEach-Object {
+         @{ name="OS";ex={$_.operatingSystem}}, @{ name="Version";ex={$_.operatingSystemVersion}}, @{ name="LastSign";ex={(get-date -Date $_.approximateLastSignInDateTime -Format 'dd.MM.yyyy HH:mm:ss').ToString()}} | ForEach-Object {
              $Devices_lv.addchild($_)  
          }    
          
+         
+         $Subscription = Get-Subscription
+         
+         $Subscription | Select-Object @{name="SKU";ex={$_.skuPartNumber}},@{name="Enabled";ex={$_.prepaidUnits.enabled}} | ForEach-Object{
+            $SKU_lv.addchild($_) 
+            #$_.skuPartNumber; $_.prepaidUnits.enabled; $_.prepaidUnits.suspended;$_.prepaidUnits.warning
+        
+        }
+         
+         $SKU_lv.Visibility        = "Visible"
 
          $Devices_Btn.IsEnabled   = $True
          $Users_Btn.IsEnabled     = $True
@@ -1509,7 +1662,7 @@ $Login_Btn.Add_Click({
          $Params_dev.nMDMDevices.Value = ($Devices | Where-Object {$null -eq $_.mdmAppId}).Count
 
          $Params_usr.User = @{}
-         $Params_usr.User.Header = "Users" 
+         $Params_usr.User.Header = "AAD Users" 
          $Params_usr.User.Value =  $Users.Count
 
          $Params_grp.AADGroup = @{}
@@ -1521,18 +1674,19 @@ $Login_Btn.Add_Click({
 
 
          $script:hash = @{}
-         New-Chart $Params_dev -ChartTitle "Azure AD devices ($($Devices.Count)) - total " -Type Pie
+         New-Chart $Params_dev -ChartTitle "Azure AD devices ($($Devices.Count)) - total " -Type Pie -PieLabelStyle "Inside"
          $Chart_dev.Source = $script:hash.Stream
          $script:hash = @{}
-         New-Chart $Params_usr -ChartTitle "AAD users ($($Users.Count)) - total " -Type Column -PieLabelStyle "Inside"
+         New-Chart $Params_usr -ChartTitle "AAD user count" -Type Pie -PieLabelStyle "Inside" -Color "White"
          $Chart_usr.Source = $script:hash.Stream
          $script:hash = @{}
-         New-Chart $Params_grp -ChartTitle "AAD groups ($($Groups.Count)) - total " -Type Pie -PieLabelStyle "Outside"
+         New-Chart $Params_grp -ChartTitle "AAD groups ($($Groups.Count)) - total " -Type Pie -PieLabelStyle "Inside"
          $Chart_grp.Source = $script:hash.Stream
 
      }
 
- })
+     $Dash_grd.Visibility        = "Visible"
+})
 
 $Add_btn.Add_Click({
 
@@ -1601,10 +1755,67 @@ $Remove_btn.Add_Click({
 
 $Add_btn_d.Add_Click({
 
+    if(!($Devices_lv.SelectedItems)){
+
+        [System.Windows.MessageBox]::Show('No device selected' , 'No device selected','OK','Information')
+    }
+    else{
+        if(!($Groups_lv_d.SelectedItems)){
+
+            [System.Windows.MessageBox]::Show('No group selected' , 'No group selected','OK','Information')
+
+        }
+        else{
+          
+            foreach($Device in $Devices_lv.SelectedItems){
+           
+                foreach($Group in $Groups_lv_d.SelectedItems){
+
+                    $isMember = Get-AADGroup -GroupName $Group.GroupName -Members | Where-Object {$_.id -eq $Device.id}
+
+                    if (!($isMember)){
+                        Add-AADGroupMember -GroupId $Group.id -AADMemberId $Device.id
+                        Show-Toast -Title "The AAD object has been changed" -Message "$($Device.DeviceName) was added into '$($Group.GroupName)' AAD group."
+                    }
+                    else{
+                        Show-Toast -Title "The AAD object hasn't been changed" -Message "$($Device.DeviceName) is already in the '$($Group.GroupName)' AAD group."
+                    }
+                }
+            } 
+        }
+    }
 })    
 
 $Remove_btn_d.Add_Click({
 
+    if(!($Devices_lv.SelectedItems)){
+        [System.Windows.MessageBox]::Show('No device selected' , 'No device selected','OK','Information')
+    }
+    else{
+
+        if(!($Groups_lv_d.SelectedItems)){
+            [System.Windows.MessageBox]::Show('No group selected' , 'No group selected','OK','Information')
+        }
+        else{
+           
+            foreach($Device in $Devices_lv.SelectedItems){
+           
+                foreach($Group in $Groups_lv_d.SelectedItems){
+
+                   $isMember = Get-AADGroup -GroupName $Group.GroupName -Members | Where-Object {$_.id -eq $Device.id}
+
+                    if ($isMember){
+
+                        Remove-AADGroupMember -GroupId $Group.id -AADMemberId $Device.id
+                        Show-Toast -Title "The AAD object has been changed" -Message "$($Device.DeviceName) was removed from the '$($Group.GroupName)' AAD group"
+                    }
+                    else{
+                         Show-Toast -Title "The AAD object hasn't been changed" -Message "$($Device.DeviceName) hasn't found in the '$($Group.GroupName)' AAD group."
+                    }
+                }
+            } 
+        }
+    }
 })    
 
 $window.ShowDialog() | Out-Null
