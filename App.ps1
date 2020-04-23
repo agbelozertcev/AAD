@@ -1,4 +1,8 @@
-﻿[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+﻿<#
+v 1.0.4
+#>
+
+[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
 [Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
 [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
 
@@ -647,7 +651,7 @@ function New-Chart() {
 	 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	 Name="window" 
 	 WindowStyle="None"
-     Title="AAD Objects Management"
+     Title="AAD Object Management"
 	 WindowState="Normal" 
      ResizeMode="CanResizeWithGrip" 
 	 ShowInTaskbar="False"
@@ -998,7 +1002,7 @@ function New-Chart() {
          <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5">
              <Rectangle Fill="SteelBlue" Margin ="5,0,0,0" RadiusY="3" RadiusX="3"/> 
              <Viewbox StretchDirection="DownOnly" Stretch="Uniform" HorizontalAlignment="Right">             
-                  <TextBlock Text="Azure AD Objects Management" Margin="0,0,35,0" Foreground="White" FontSize="30" FontFamily="Segoe UI" />
+                  <TextBlock Text="Azure AD Object Management" Margin="0,0,35,0" Foreground="White" FontSize="30" FontFamily="Segoe UI" />
              </Viewbox>
          </Grid>
 
@@ -1146,7 +1150,7 @@ function New-Chart() {
  <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5">
      <Rectangle Fill="SteelBlue" Margin ="5,0,0,0" RadiusY="3" RadiusX="3"/> 
      <Viewbox StretchDirection="DownOnly" Stretch="Uniform" HorizontalAlignment="Right">             
-         <TextBlock Text="Azure AD Objects Management" Margin="0,0,35,0" Foreground="White" FontSize="30" FontFamily="Segoe UI" />
+         <TextBlock Text="Azure AD User Management" Margin="0,0,35,0" Foreground="White" FontSize="30" FontFamily="Segoe UI" />
      </Viewbox>
      </Grid>
 
@@ -1323,7 +1327,7 @@ function New-Chart() {
  <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5">
      <Rectangle Fill="SteelBlue" Margin ="5,0,0,0" RadiusY="3" RadiusX="3"/> 
      <Viewbox StretchDirection="DownOnly" Stretch="Uniform" HorizontalAlignment="Right">             
-         <TextBlock Text="Azure AD Objects Management" Margin="0,0,35,0" Foreground="White" FontSize="30" FontFamily="Segoe UI" />
+         <TextBlock Text="Azure AD Device Management" Margin="0,0,35,0" Foreground="White" FontSize="30" FontFamily="Segoe UI" />
      </Viewbox>
      </Grid>
 
