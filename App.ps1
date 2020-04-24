@@ -1,5 +1,5 @@
 ﻿<#
-v 1.0.4
+v 1.0.5
 #>
 
 [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
