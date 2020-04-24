@@ -597,20 +597,20 @@ function New-Chart() {
         $Color = 'Black'
     )
  
-    #Create our chart object
+    
     $Chart = New-object System.Windows.Forms.DataVisualization.Charting.Chart
     $Chart.Width = 430
     $Chart.Height = 330
     $Chart.Left = 10
     $Chart.Top = 10
  
-    #Create a chartarea to draw on and add this to the chart
+    
     $ChartArea = New-Object System.Windows.Forms.DataVisualization.Charting.ChartArea
     $Chart.ChartAreas.Add($ChartArea)
     $Chart.ChartAreas[0].Area3DStyle.Enable3D = "True"
     [void]$Chart.Series.Add("Data") 
  
-    #Add a datapoint for each value specified in the parameter hash table
+    
     $Params.GetEnumerator() | ForEach-Object {
         $datapoint = new-object System.Windows.Forms.DataVisualization.Charting.DataPoint(0, $_.Value.Value)
         $datapoint.AxisLabel = "$($_.Value.Header)" + " (" + $($_.Value.Value) + ")"
