@@ -1133,7 +1133,7 @@ function ConvertSKUto-FrendlyName{
          <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5">
              <Rectangle Fill="SteelBlue" Margin ="5,0,0,0" RadiusY="3" RadiusX="3"/> 
              <Viewbox StretchDirection="DownOnly" Stretch="Uniform" HorizontalAlignment="Right">             
-                  <TextBlock Text="Azure AD Object Management" Margin="0,0,35,0" Foreground="White" FontSize="30" FontFamily="Segoe UI" />
+                  <TextBlock Text="Azure AD Objects" Margin="0,0,35,0" Foreground="White" FontSize="30" FontFamily="Segoe UI" />
              </Viewbox>
          </Grid>
 
@@ -1281,7 +1281,7 @@ function ConvertSKUto-FrendlyName{
  <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5">
      <Rectangle Fill="SteelBlue" Margin ="5,0,0,0" RadiusY="3" RadiusX="3"/> 
      <Viewbox StretchDirection="DownOnly" Stretch="Uniform" HorizontalAlignment="Right">             
-         <TextBlock Text="Azure AD User Management" Margin="0,0,35,0" Foreground="White" FontSize="30" FontFamily="Segoe UI" />
+         <TextBlock Text="Azure AD Users" Margin="0,0,35,0" Foreground="White" FontSize="30" FontFamily="Segoe UI" />
      </Viewbox>
      </Grid>
 
@@ -1458,7 +1458,7 @@ function ConvertSKUto-FrendlyName{
  <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5">
      <Rectangle Fill="SteelBlue" Margin ="5,0,0,0" RadiusY="3" RadiusX="3"/> 
      <Viewbox StretchDirection="DownOnly" Stretch="Uniform" HorizontalAlignment="Right">             
-         <TextBlock Text="Azure AD Device Management" Margin="0,0,35,0" Foreground="White" FontSize="30" FontFamily="Segoe UI" />
+         <TextBlock Text="Azure AD Devices" Margin="0,0,35,0" Foreground="White" FontSize="30" FontFamily="Segoe UI" />
      </Viewbox>
      </Grid>
 
