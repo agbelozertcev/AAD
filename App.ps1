@@ -130,7 +130,7 @@ $authority = "https://login.microsoftonline.com/$Tenant"
     write-host $_.Exception.Message -f Red
     write-host $_.Exception.ItemName -f Red
     write-host
-    break
+    
 
     }
 
@@ -190,8 +190,7 @@ $User_resource = "users"
     $responseBody = $reader.ReadToEnd();
     Write-Host "Response content:`n$responseBody" -f Red
     Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
-    write-host
-    break
+    [System.Windows.MessageBox]::Show('Get-AADUser  ' + $responseBody , 'Request failed','OK','Error')
 
     }
 
@@ -271,8 +270,7 @@ $Group_resource = "groups"
     $responseBody = $reader.ReadToEnd();
     Write-Host "Response content:`n$responseBody" -f Red
     Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
-    write-host
-    break
+    [System.Windows.MessageBox]::Show('Get-AADGroup  ' + $responseBody , 'Request failed','OK','Error')
 
     }
 
@@ -316,8 +314,7 @@ $JSON = @"
     $responseBody = $reader.ReadToEnd();
     Write-Host "Response content:`n$responseBody" -f Red
     Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
-    write-host
-    break
+    [System.Windows.MessageBox]::Show('Add-AADGroupMember  ' + $responseBody , 'Request failed','OK','Error')
 
     }
 
@@ -356,8 +353,7 @@ $Resource = "groups"
     $responseBody = $reader.ReadToEnd();
     Write-Host "Response content:`n$responseBody" -f Red
     Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
-    write-host
-    break
+    [System.Windows.MessageBox]::Show('Remove-AADGroupMember  ' + $responseBody , 'Request failed','OK','Error')
 
     }
 
@@ -404,8 +400,7 @@ function Get-AADDevice(){
         $responseBody = $reader.ReadToEnd();
         Write-Host "Response content:`n$responseBody" -f Red
         Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
-        write-host
-        break
+        [System.Windows.MessageBox]::Show('Get-AADDevice  ' + $responseBody , 'Request failed','OK','Error')
     
         }
 }
@@ -457,7 +452,7 @@ function Get-Registration(){
     Write-Host "Response content:`n$responseBody" -f Red
     Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
     write-host
-    [System.Windows.MessageBox]::Show('Get-RegistrationInfo  ' +$responseBody , 'Request failed','OK','Error')
+    [System.Windows.MessageBox]::Show('Get-RegistrationInfo  ' + $responseBody , 'Request failed','OK','Error')
    
 
     }
@@ -483,7 +478,7 @@ function Get-Subscription(){
     $responseBody = $reader.ReadToEnd();
     Write-Host "Response content:`n$responseBody" -f Red
     Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
-    [System.Windows.MessageBox]::Show('Get-Subscription  ' +$responseBody , 'Request failed','OK','Error')
+    [System.Windows.MessageBox]::Show('Get-Subscription  ' + $responseBody , 'Request failed','OK','Error')
 
     }
 }
@@ -552,8 +547,7 @@ function Get-ManagedDevices(){
         $responseBody = $reader.ReadToEnd();
         Write-Host "Response content:`n$responseBody" -f Red
         Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
-        write-host
-        break
+        [System.Windows.MessageBox]::Show('Get-ManagedDevices  ' + $responseBody , 'Request failed','OK','Error')
     
         }
 }
