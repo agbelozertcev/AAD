@@ -36,16 +36,9 @@ $tenant = $userUpn.Host
     }
 
     if ($null -eq $AadModule) {
-        write-host
-        write-host "AzureAD Powershell module not installed..." -f Red
-        write-host "Install by running 'Install-Module AzureAD' or 'Install-Module AzureADPreview' from an elevated PowerShell prompt" -f Yellow
-        write-host "Script can't continue..." -f Red
-        write-host
-        exit
+        [System.Windows.MessageBox]::Show("Install by running 'Install-Module AzureAD' or 'Install-Module AzureADPreview' from an elevated PowerShell prompt. Script can't continue..."  , 'AzureAD Powershell module not installed...','OK','Warning')
     }
 
-# Getting path to ActiveDirectory Assemblies
-# If the module count is greater than 1 find the latest version
 
     if($AadModule.count -gt 1){
 
@@ -115,11 +108,7 @@ $authority = "https://login.microsoftonline.com/$Tenant"
         }
 
         else {
-
-        Write-Host
-        Write-Host "Authorization Access Token is null, please re-run authentication..." -ForegroundColor Red
-        Write-Host
-        break
+             [System.Windows.MessageBox]::Show("Authorization Access Token is null, please re-run authentication..."  , 'Authorization Access Token is null','OK','Warning')
 
         }
 
@@ -127,9 +116,7 @@ $authority = "https://login.microsoftonline.com/$Tenant"
 
     catch {
 
-    write-host $_.Exception.Message -f Red
-    write-host $_.Exception.ItemName -f Red
-    write-host
+       [System.Windows.MessageBox]::Show($_.Exception.ItemName , 'Get-AuthToken','OK','Warning')
     
 
     }
@@ -197,8 +184,6 @@ $User_resource = "users"
 }
 
 function Get-AADGroup(){
-
-
 
 [cmdletbinding()]
 
@@ -351,8 +336,8 @@ $Resource = "groups"
     $reader.BaseStream.Position = 0
     $reader.DiscardBufferedData()
     $responseBody = $reader.ReadToEnd();
-    Write-Host "Response content:`n$responseBody" -f Red
-    Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
+    #Write-Host "Response content:`n$responseBody" -f Red
+    #SWrite-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
     [System.Windows.MessageBox]::Show('Remove-AADGroupMember  ' + $responseBody , 'Request failed','OK','Error')
 
     }
@@ -1314,7 +1299,13 @@ function ConvertSKUto-FrendlyName{
          </ListView.Resources>
 
          <ListView.View>
-                 <GridView>
+             <GridView AllowsColumnReorder="true">
+                 <GridView.ColumnHeaderContextMenu>
+                     <ContextMenu >
+                         <MenuItem x:Name="Users_lv_Asc_sort" Header="Ascending" />
+                         <MenuItem x:Name="Users_lv_Desc_sort" Header="Descending" />
+                     </ContextMenu>
+                 </GridView.ColumnHeaderContextMenu>                 
                      <GridView.Columns>
                          <GridViewColumn Width="30">
                              <GridViewColumn.Header>
@@ -1351,8 +1342,8 @@ function ConvertSKUto-FrendlyName{
 
                  <GridView.ColumnHeaderContextMenu>
                      <ContextMenu >
-                         <MenuItem Header="Ascending" />
-                         <MenuItem Header="Descending" />
+                         <MenuItem x:Name="Groups_lv_Asc_sort" Header="Ascending" />
+                         <MenuItem x:Name="Groups_lv_Desc_sort" Header="Descending" />
                      </ContextMenu>
                  </GridView.ColumnHeaderContextMenu>
 
@@ -1492,6 +1483,12 @@ function ConvertSKUto-FrendlyName{
 
          <ListView.View>
                  <GridView>
+                    <GridView.ColumnHeaderContextMenu>
+                        <ContextMenu >
+                            <MenuItem x:Name="Devices_lv_Asc_sort" Header="Ascending" />
+                            <MenuItem x:Name="Devices_lv_Desc_sort" Header="Descending" />
+                        </ContextMenu>
+                    </GridView.ColumnHeaderContextMenu>                 
                      <GridView.Columns>
                          <GridViewColumn Width="30">
                              <GridViewColumn.Header>
@@ -1533,8 +1530,8 @@ function ConvertSKUto-FrendlyName{
 
                  <GridView.ColumnHeaderContextMenu>
                      <ContextMenu >
-                         <MenuItem Header="Ascending" />
-                         <MenuItem Header="Descending" />
+                         <MenuItem x:Name="Groups_lv_d_Asc_sort" Header="Ascending" />
+                         <MenuItem x:Name="Groups_lv_d_Desc_sort" Header="Descending" />
                      </ContextMenu>
                  </GridView.ColumnHeaderContextMenu>
 
@@ -1946,6 +1943,110 @@ $Remove_btn_d.Add_Click({
         }
     }
 })    
+
+$Users_lv_SelectAll.Add_Checked({
+    foreach($U_item in $Users_lv.Items){
+                   
+        $Users_lv.SelectedItems.Add($U_item);          
+    } 
+
+})
+
+$Users_lv_SelectAll.Add_UnChecked({
+    foreach($U_item in $Users_lv.Items){
+                   
+        $Users_lv.SelectedItems.Remove($U_item);          
+    } 
+
+})
+
+$Groups_lv_SelectAll.Add_Checked({
+    foreach($G_item in $Groups_lv.Items){
+                   
+        $Groups_lv.SelectedItems.Add($G_item);          
+    } 
+
+})
+
+$Groups_lv_SelectAll.Add_UnChecked({
+    foreach($G_item in $Groups_lv.Items){
+                   
+        $Groups_lv.SelectedItems.Remove($G_item);          
+    } 
+
+})
+
+$Groups_lv_d_SelectAll.Add_Checked({
+    foreach($G_d_item in $Groups_lv_d.Items){
+                   
+        $Groups_lv_d.SelectedItems.Add($G_d_item);          
+    } 
+
+})
+
+$Groups_lv_d_SelectAll.Add_UnChecked({
+    foreach($G_d_item in  $Groups_lv_d.Items){
+                   
+        $Groups_lv_d.SelectedItems.Remove($G_d_item);          
+    } 
+
+})
+
+$Devices_lv_SelectAll.Add_Checked({
+    foreach($D_item in $Devices_lv.Items){
+                   
+        $Devices_lv.SelectedItems.Add($D_item);          
+    } 
+
+})
+
+$Devices_lv_SelectAll.Add_UnChecked({
+    foreach($D_item in $Devices_lv.Items){
+                   
+        $Devices_lv.SelectedItems.Remove($D_item);          
+    } 
+
+})
+
+$Groups_lv_d_Asc_sort.Add_Click({
+    $Groups_lv_d.Items.SortDescriptions.Clear()
+    $Groups_lv_d.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("GroupName", [System.ComponentModel.ListSortDirection]::Ascending))
+ })
+ 
+ $Groups_lv_d_Desc_sort.Add_Click({
+    $Groups_lv_d.Items.SortDescriptions.Clear()
+    $Groups_lv_d.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("GroupName", [System.ComponentModel.ListSortDirection]::Descending))
+ })
+
+ $Groups_lv_Asc_sort.Add_Click({
+    $Groups_lv.Items.SortDescriptions.Clear()
+    $Groups_lv.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("GroupName", [System.ComponentModel.ListSortDirection]::Ascending))
+ })
+ 
+ $Groups_lv_Desc_sort.Add_Click({
+    $Groups_lv.Items.SortDescriptions.Clear()
+    $Groups_lv.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("GroupName", [System.ComponentModel.ListSortDirection]::Descending))
+ })
+
+ $Users_lv_Asc_sort.Add_Click({
+    $Users_lv.Items.SortDescriptions.Clear()
+    $Users_lv.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("UserName", [System.ComponentModel.ListSortDirection]::Ascending))
+ })
+ 
+ $Users_lv_Desc_sort.Add_Click({
+    $Users_lv.Items.SortDescriptions.Clear()
+    $Users_lv.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("UserName", [System.ComponentModel.ListSortDirection]::Descending))
+ })
+
+ $Devices_lv_Asc_sort.Add_Click({
+    $Devices_lv.Items.SortDescriptions.Clear()
+    $Devices_lv.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("DeviceName", [System.ComponentModel.ListSortDirection]::Ascending))
+ })
+ 
+ $Devices_lv_Desc_sort.Add_Click({
+    $Devices_lv.Items.SortDescriptions.Clear()
+    $Devices_lv.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("DeviceName", [System.ComponentModel.ListSortDirection]::Descending))
+ })
 
 $window.ShowDialog() | Out-Null
 
