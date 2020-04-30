@@ -344,6 +344,130 @@ $Resource = "groups"
 
 }
 
+function New-AADGroup(){
+
+
+    [cmdletbinding()]
+    
+    param
+    (
+       [Parameter(Mandatory = $true)]
+       [ValidateNotNullOrEmpty()]
+       [ValidateSet('Office', 'OfficeDynamic','Security')]
+       [String]$GroupType,
+       [string]$description,
+       [string]$displayName,
+       [string]$mailEnabled = $false,
+       [string]$mailNickname = $displayName,
+       [string]$securityEnabled = $false,
+       [string]$membershipRule
+    )
+
+         try {
+    
+          $uri = "https://graph.microsoft.com/v1.0/groups"
+
+          if($GroupType -eq "Office" -or $GroupType -eq "OfficeDynamic"){ 
+
+            if ($GroupType -eq "Office"){
+
+              $flag = "Office"
+
+              $Json = @{
+                  "description"     = $description
+                  "displayName"     = $displayName
+                  "groupTypes"      = @("Unified")
+                  "mailEnabled"     = $mailEnabled
+                  "mailNickname"    = $mailNickname
+                  "securityEnabled" = $securityEnabled
+              } | ConvertTo-Json
+              
+            }
+            elseif($GroupType -eq "OfficeDynamic"){
+             
+              $flag = "OfficeDynamic"
+
+              $Json = @{
+                  "description"     = $description
+                  "displayName"     = $displayName
+                  "groupTypes"      = @("Unified","DynamicMembership")
+                  "mailEnabled"     = $mailEnabled
+                  "mailNickname"    = $mailNickname
+                  "membershipRule"  = $membershipRule 
+                  "membershipRuleProcessingState" = "On"
+                  "securityEnabled" = $securityEnabled
+              } | ConvertTo-Json
+ 
+            }
+        
+          }
+          elseif($GroupType -eq "Security" -and $membershipRule -ne ""){  
+            
+            $flag = "Security with Rule"
+
+            $JSON = @{
+                "description"    = $description
+                "displayName"    = $displayName
+                "groupTypes"     = @("DynamicMembership")
+                "mailEnabled"    = "false"
+                "mailNickname"   = $displayName
+                "membershipRule" = $membershipRule 
+                "membershipRuleProcessingState" = "On"
+                "securityEnabled" = $securityEnabled
+            } | ConvertTo-Json
+
+          }
+          elseif($GroupType -eq "Security" -and $membershipRule -eq ""){
+
+            $flag = "Security without Rule"
+
+            $JSON = @{
+                "description"     = $description
+                "displayName"     = $displayName
+                "groupTypes"      = @("DynamicMembership")
+                "mailEnabled"     = "false"
+                "mailNickname"    = $displayName
+                "securityEnabled" = $securityEnabled
+            } | ConvertTo-Json
+
+          }
+          elseif($GroupType -eq "Security" -and $global:securityEnabled.IsChecked -eq $false){
+
+            $flag = "Security without Security"
+
+            $JSON = @{
+                "description"     = $description
+                "displayName"     = $displayName
+                "groupTypes"      = @("DynamicMembership")
+                "securityEnabled" = "false"
+                "mailEnabled"     = "false"
+            } | ConvertTo-Json
+
+          }          
+          
+
+                Invoke-RestMethod -Uri $uri -Headers $authToken -Method Post -Body $Json -ContentType "application/json"
+                $global:Create_Group_Result.Visibility = "Visible"
+                $global:Create_Group_Result.Content="The group was successfully created"
+                $global:Create_Group_Result.Foreground="Green"
+        }
+    
+        catch {
+    
+        $ex = $_.Exception
+        $errorResponse = $ex.Response.GetResponseStream()
+        $reader = New-Object System.IO.StreamReader($errorResponse)
+        $reader.BaseStream.Position = 0
+        $reader.DiscardBufferedData()
+        $responseBody = $reader.ReadToEnd();
+        Write-Host "Response content:`n$responseBody" -f Red
+        Write-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
+        [System.Windows.MessageBox]::Show("New-AADGroup ($($flag)) " + $responseBody , 'Request failed','OK','Error')
+    
+        }
+    
+}
+
 function Get-AADDevice(){
 
      
@@ -750,11 +874,11 @@ function ConvertSKUto-FrendlyName{
     default { $SKU }
     }
     
-    }
+ }
 
 #endregion functions
 
-# XAML
+# XAML Main window
 [xml]$xaml = @"
  <Window
 	 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -807,7 +931,7 @@ function ConvertSKUto-FrendlyName{
          <Setter Property="HorizontalContentAlignment" Value="Stretch" />
      </Style>    
 
-<!-- ******************** Window Border Style ****************************** --> 
+<!-- ******************** Window Border Style ************************ --> 
 
      <Style TargetType="{x:Type Border}">
          <Setter Property="CornerRadius" Value="5"/>
@@ -1236,7 +1360,7 @@ function ConvertSKUto-FrendlyName{
 
  <!-- ************************* _Users grid  ***********************-->
 
- <Grid x:Name = "Users_grd" Grid.Row="0" Grid.Column="1">
+ <Grid x:Name = "Users_grd" Grid.Row="0" Grid.Column="1" >
      <Grid.RowDefinitions>
          <RowDefinition Height="0.15*"/>
          <RowDefinition Height="0.02*"/>
@@ -1249,8 +1373,8 @@ function ConvertSKUto-FrendlyName{
      <Grid.ColumnDefinitions>
          <ColumnDefinition Width="0.02*"/>
          <ColumnDefinition />
-         <ColumnDefinition Width="0.1*"/>
-         <ColumnDefinition Width="0.1*"/>
+         <ColumnDefinition Width="0.2*"/>
+         <ColumnDefinition Width="0.2*"/>
          <ColumnDefinition Width="0.02*"/>
      </Grid.ColumnDefinitions>
 
@@ -1265,6 +1389,22 @@ function ConvertSKUto-FrendlyName{
      </Grid>
 
  <!-- ********************** _Users End of Header  ********************-->
+
+     <Button x:Name = "Add_grp_Btn" Grid.Row="2" Grid.Column="2" FontSize="15" Background="White" Foreground="Black" Style="{StaticResource ButtonTemplate}" Margin ="5,5,5,5" >
+     <Button.Content>
+         <Viewbox StretchDirection="DownOnly" Stretch="Uniform">
+             <ContentControl Content="Create Group"/>
+         </Viewbox>
+     </Button.Content>
+     </Button>
+
+     <Button x:Name = "Del_grp_Btn" Grid.Row="2" Grid.Column="3" FontSize="15" Background="White" Foreground="Black" Style="{StaticResource ButtonTemplate}" Margin ="5,5,5,5" >
+     <Button.Content>
+         <Viewbox StretchDirection="DownOnly" Stretch="Uniform">
+             <ContentControl Content="Delete Group(s)"/>
+         </Viewbox>
+     </Button.Content>
+     </Button>
 
  <!-- ********************** _Users Tables  ********************-->
 
@@ -1302,8 +1442,10 @@ function ConvertSKUto-FrendlyName{
              <GridView AllowsColumnReorder="true">
                  <GridView.ColumnHeaderContextMenu>
                      <ContextMenu >
-                         <MenuItem x:Name="Users_lv_Asc_sort" Header="Ascending" />
-                         <MenuItem x:Name="Users_lv_Desc_sort" Header="Descending" />
+                         <MenuItem x:Name="Users_lv_Asc_sort" Header="Sore - Ascending" />
+                         <MenuItem x:Name="Users_lv_Desc_sort" Header="Sort - Descending" />
+                         <Separator />
+                         <MenuItem x:Name="Users_lv_Refresh" Header="Refresh" />                                     
                      </ContextMenu>
                  </GridView.ColumnHeaderContextMenu>                 
                      <GridView.Columns>
@@ -1342,8 +1484,10 @@ function ConvertSKUto-FrendlyName{
 
                  <GridView.ColumnHeaderContextMenu>
                      <ContextMenu >
-                         <MenuItem x:Name="Groups_lv_Asc_sort" Header="Ascending" />
-                         <MenuItem x:Name="Groups_lv_Desc_sort" Header="Descending" />
+                         <MenuItem x:Name="Groups_lv_Asc_sort" Header="Sort - Ascending" />
+                         <MenuItem x:Name="Groups_lv_Desc_sort" Header="Sort - Descending" />
+                         <Separator />
+                         <MenuItem x:Name="Groups_lv_Refresh" Header="Refresh" />
                      </ContextMenu>
                  </GridView.ColumnHeaderContextMenu>
 
@@ -1472,6 +1616,9 @@ function ConvertSKUto-FrendlyName{
 
      <ListView x:Name="Devices_lv" Grid.Column="0" Margin="0,0,5,0" FontSize="12" ItemsSource="{Binding}" IsSynchronizedWithCurrentItem="True" BorderThickness="0">
          <ListView.Resources>
+             <ContextMenu x:Key="ItemContextMenu_Devices_lv">
+                 <MenuItem Header="Properties"></MenuItem>
+             </ContextMenu>         
              <Style TargetType="{x:Type GridViewColumnHeader}">
                  <Setter Property="HorizontalContentAlignment" Value="Left"/>
                  <Setter Property="Background" Value="SteelBlue"/>
@@ -1480,14 +1627,20 @@ function ConvertSKUto-FrendlyName{
                  <Setter Property="FontSize" Value="14"/>
               </Style>
          </ListView.Resources>
-
+         <ListView.ItemContainerStyle>
+                 <Style TargetType="{x:Type ListViewItem}">
+                 <Setter Property="ContextMenu" Value="{StaticResource ItemContextMenu_Devices_lv}"/>
+             </Style>
+         </ListView.ItemContainerStyle>
          <ListView.View>
                  <GridView>
                     <GridView.ColumnHeaderContextMenu>
                         <ContextMenu >
-                            <MenuItem x:Name="Devices_lv_Asc_sort" Header="Ascending" />
-                            <MenuItem x:Name="Devices_lv_Desc_sort" Header="Descending" />
-                        </ContextMenu>
+                            <MenuItem x:Name="Devices_lv_Asc_sort" Header="Sort - Ascending" />
+                            <MenuItem x:Name="Devices_lv_Desc_sort" Header="Sort - Descending" />
+                            <Separator />
+                            <MenuItem x:Name="Devices_lv_Refresh" Header="Refresh" />                                        
+                         </ContextMenu>
                     </GridView.ColumnHeaderContextMenu>                 
                      <GridView.Columns>
                          <GridViewColumn Width="30">
@@ -1514,6 +1667,9 @@ function ConvertSKUto-FrendlyName{
 
      <ListView x:Name="Groups_lv_d" Grid.Column="1"  FontSize="12"  ItemsSource="{Binding}" IsSynchronizedWithCurrentItem="True" ScrollViewer.CanContentScroll="True"  HorizontalAlignment="Stretch" VerticalAlignment="Top" BorderThickness="0" >
          <ListView.Resources>
+             <ContextMenu x:Key="ItemContextMenu_Group_lv_d">
+                 <MenuItem Header="Properties"></MenuItem>
+             </ContextMenu>
              <Style TargetType="{x:Type GridViewColumnHeader}">
                 <!-- <Setter Property="HorizontalContentAlignment" Value="Left"/> -->
                  <Setter Property="Background" Value="SteelBlue"/>
@@ -1524,17 +1680,22 @@ function ConvertSKUto-FrendlyName{
                  <Setter Property="HorizontalContentAlignment" Value="Stretch" />
              </Style>
           </ListView.Resources>
-   
+          <ListView.ItemContainerStyle>
+             <Style TargetType="{x:Type ListViewItem}">
+                 <Setter Property="ContextMenu" Value="{StaticResource ItemContextMenu_Group_lv_d}"/>
+              </Style>
+         </ListView.ItemContainerStyle>
          <ListView.View>
-             <GridView AllowsColumnReorder="true" ColumnHeaderToolTip="Authors">
-
+              <GridView AllowsColumnReorder="true" ColumnHeaderToolTip="Authors">
                  <GridView.ColumnHeaderContextMenu>
                      <ContextMenu >
-                         <MenuItem x:Name="Groups_lv_d_Asc_sort" Header="Ascending" />
-                         <MenuItem x:Name="Groups_lv_d_Desc_sort" Header="Descending" />
-                     </ContextMenu>
+                         <MenuItem x:Name="Groups_lv_d_Asc_sort" Header="Sort - Ascending" />
+                         <MenuItem x:Name="Groups_lv_d_Desc_sort" Header="Sort - Descending" />
+                         <Separator />
+                         <MenuItem x:Name="Groups_lv_d_Refresh" Header="Refresh" />                                 
+                       </ContextMenu>
                  </GridView.ColumnHeaderContextMenu>
-
+                 
                  <GridView.Columns >
                      <GridViewColumn Width="30">
                          <GridViewColumn.Header>
@@ -1610,7 +1771,306 @@ function ConvertSKUto-FrendlyName{
  </Grid>
  </Window>
 "@
-			
+
+# XAML Child window
+[xml]$grp_xaml = @"
+<Window x:Name="grp_Window"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Create New Group"
+        Height="500" 
+        Width="600"
+        ResizeMode="CanResizeWithGrip" 
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterScreen"
+        BorderBrush="DarkCyan"
+        BorderThickness="2"
+        WindowStyle="ToolWindow"
+        FontFamily="Segoe UI"
+        >
+         <Window.Resources>
+
+         <!-- ************************** Buttons Style  *********************** --> 
+
+         <Style x:Key="ButtonTemplate1" TargetType="Button" >
+             <Setter Property="OverridesDefaultStyle" Value="True" />
+             <Setter Property="Cursor" Value="Hand" />
+             <Setter Property="Template">
+                 <Setter.Value>
+                     <ControlTemplate TargetType="Button">
+                         <Border Name="border" BorderThickness="2" BorderBrush="DarkCyan" Background="{TemplateBinding Background}" CornerRadius="3" >
+                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                         </Border>
+                         <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                  <Setter Property="Opacity" Value="0.5" />
+                             </Trigger>
+                         </ControlTemplate.Triggers>
+                     </ControlTemplate>
+                 </Setter.Value>
+             </Setter>
+         </Style>
+   
+         <!-- ************************ End Buttons Style ********************--> 
+
+         <!-- ************************ CheckBox Style  ************************-->
+
+         <Style x:Key="CheckBoxFocusVisual">
+             <Setter Property="Control.Template">
+                 <Setter.Value>
+                     <ControlTemplate>
+                         <Border>
+                             <Rectangle Margin="15,0,0,0" StrokeThickness="1" Stroke="#60000000" StrokeDashArray="1 2"/>
+                         </Border>
+                     </ControlTemplate>
+                 </Setter.Value>
+             </Setter>
+         </Style>
+         <Style x:Key="CheckBoxTemplate" TargetType="CheckBox">
+             <Setter Property="SnapsToDevicePixels" Value="true"/>
+             <Setter Property="OverridesDefaultStyle" Value="true"/>
+             <Setter Property="FontFamily" Value="{DynamicResource MetroFontRegular}"/>
+             <Setter Property="FocusVisualStyle" Value="{StaticResource CheckBoxFocusVisual}"/>
+             <Setter Property="Foreground" Value="Black"/>
+             <Setter Property="Background" Value="#3f3f3f"/>
+             <Setter Property="FontSize" Value="12"/>
+             <Setter Property="Margin" Value="0,5,0,0"/>
+             <Setter Property="Template">
+                 <Setter.Value>
+                     <ControlTemplate TargetType="CheckBox">
+                         <BulletDecorator Background="Transparent">
+                             <BulletDecorator.Bullet>
+                                 <Border x:Name="Border"  
+                                     Width="16" 
+                                     Height="16" 
+                                     CornerRadius="1" 
+                                     BorderBrush="DarkCyan"
+                                     BorderThickness="1.5">
+                                     <Border.Effect>
+                                         <DropShadowEffect BlurRadius="1" ShadowDepth="0.5" />
+                                     </Border.Effect>
+                                         <Path 
+                                            Width="7" Height="7" 
+                                            x:Name="CheckMark"
+                                            SnapsToDevicePixels="False" 
+                                            Stroke="DarkCyan"
+                                            StrokeThickness="1.5"
+                                            Stretch="Fill"
+                                            StrokeEndLineCap="Round"
+                                            StrokeStartLineCap="Round"
+                                            Data="M 0 0 L 7 7 M 0 7 L 7 0" />
+                                 </Border>
+                             </BulletDecorator.Bullet>
+                             <TextBlock Margin="5,0,0,0" Foreground="Black" FontSize="15">
+                                 <ContentPresenter />
+                             </TextBlock>
+                         </BulletDecorator>
+                             <ControlTemplate.Triggers>
+                                 <Trigger Property="IsChecked" Value="false">
+                                     <Setter TargetName="CheckMark" Property="Visibility" Value="Collapsed"/>
+                                 </Trigger>
+                                 <Trigger Property="IsChecked" Value="{x:Null}">
+                                     <Setter TargetName="CheckMark" Property="Data" Value="M 0 7 L 7 0" />
+                                 </Trigger>
+                                 <Trigger Property="IsMouseOver" Value="true">
+                                     <Setter TargetName="Border" Property="Background" Value="Cyan" />
+                                     <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource ApplicationAccentBrush}" />
+                                 </Trigger>
+                                 <Trigger Property="IsEnabled" Value="false">
+                                     <Setter Property="Foreground" Value="#c1c1c1"/>
+                                 </Trigger>
+                             </ControlTemplate.Triggers>
+                     </ControlTemplate>
+                 </Setter.Value>
+             </Setter>
+         </Style>
+    
+        <!-- ******************** End ChekBox Style  ********************-->  
+        
+ 
+        </Window.Resources>
+
+    <Grid >
+         <Grid.RowDefinitions>
+             <RowDefinition Height="0.8*"/>
+             <RowDefinition Height="0.7*"/>
+             <RowDefinition Height="0.7*"/>
+             <RowDefinition Height="0.7*"/>
+             <RowDefinition />
+             <RowDefinition />
+         </Grid.RowDefinitions>
+         <Grid.ColumnDefinitions>
+             <ColumnDefinition Width="0.1*"/>
+             <ColumnDefinition />
+             <ColumnDefinition />
+             <ColumnDefinition Width="0.1*"/>
+         </Grid.ColumnDefinitions>
+
+          <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Margin="0,2,5,2">
+             <Rectangle Fill="SteelBlue" Margin ="5,0,0,0" RadiusY="3" RadiusX="3"/> 
+             <Viewbox StretchDirection="DownOnly" Stretch="Uniform" HorizontalAlignment="Right">             
+                 <TextBlock Text="Create New Group" Margin="0,0,35,0" Foreground="White" FontSize="30" FontFamily="Segoe UI" />
+             </Viewbox>
+            </Grid>
+
+        <CheckBox x:Name="G_Unified" Content="Unified (Office 365)" Grid.Row="1" Grid.Column="2" FontSize="13" Margin="10,5,5,5" Style="{StaticResource CheckBoxTemplate}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+        <CheckBox x:Name="G_DynamicMembership" Content="DynamicMembership (Security)" Grid.Row="1" Grid.Column="2" FontSize="13" Margin="10,25,5,5" Style="{StaticResource CheckBoxTemplate}" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+
+        <CheckBox x:Name="G_mailEnabled" Content="Mail Enabled" Grid.Row="3" Grid.Column="2" FontSize="13" Margin="10,5,5,5" Style="{StaticResource CheckBoxTemplate}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+        <CheckBox x:Name="G_securityEnabled" Content="Security Enabled" Grid.Row="3" Grid.Column="2" FontSize="13" Margin="10,25,5,5" Style="{StaticResource CheckBoxTemplate}" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+        
+       <!-- ******************** Text box  ********************--> 
+
+        <Viewbox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" Stretch="Uniform">
+          <Grid >
+               <Grid.Resources>
+                   <VisualBrush x:Key="LoginHint" Stretch="None" AlignmentX="left" AlignmentY="Top" >
+                        <VisualBrush.Transform>
+                            <TranslateTransform X="5" Y="3" />
+                        </VisualBrush.Transform>
+                        <VisualBrush.Visual>
+                            <Grid HorizontalAlignment="Left">
+                              <TextBlock FontFamily="SEGOEWP"  FontSize="10"   FontWeight="Normal" 
+                                   HorizontalAlignment="Left" VerticalAlignment="Center" Foreground="Gray" FontStyle="Italic" Opacity="1"  
+                                   Text="Enter Group Name"/>
+                            </Grid>
+                        </VisualBrush.Visual>
+                    </VisualBrush>
+                </Grid.Resources>
+                <TextBox x:Name="G_displayName" MinWidth="150" Margin="2,2,2,2" >
+                  <TextBox.Style>
+                     <Style TargetType="{x:Type TextBox}">
+                       <Setter Property="Background" Value="Transparent"/>
+                         <Style.Triggers>
+                           <DataTrigger Binding="{Binding ElementName=G_displayName,Path=Text}" Value="" >
+                              <Setter Property="Background" Value="{StaticResource LoginHint}"/>
+                           </DataTrigger>
+                         </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                 </TextBox>
+             </Grid>
+         </Viewbox>
+
+       <!-- ******************** Text box  ********************--> 
+
+        <Viewbox Grid.Row="2" Grid.Column="1" HorizontalAlignment="Left" Stretch="Uniform"  Grid.ColumnSpan="2">
+          <Grid >
+               <Grid.Resources>
+                   <VisualBrush x:Key="LoginHint" Stretch="None" AlignmentX="left" AlignmentY="Top" >
+                        <VisualBrush.Transform>
+                            <TranslateTransform X="5" Y="3" />
+                        </VisualBrush.Transform>
+                        <VisualBrush.Visual>
+                            <Grid HorizontalAlignment="Left">
+                              <TextBlock FontFamily="SEGOEWP"  FontSize="10"   FontWeight="Normal" 
+                                   HorizontalAlignment="Left" VerticalAlignment="Center" Foreground="Gray" FontStyle="Italic" Opacity="1"  
+                                   Text="Enter Group Description"/>
+                            </Grid>
+                        </VisualBrush.Visual>
+                    </VisualBrush>
+                </Grid.Resources>
+                <TextBox x:Name="G_Description" MinWidth="300" Margin="2,2,2,2" >
+                  <TextBox.Style>
+                     <Style TargetType="{x:Type TextBox}">
+                       <Setter Property="Background" Value="Transparent"/>
+                         <Style.Triggers>
+                           <DataTrigger Binding="{Binding ElementName=G_Description,Path=Text}" Value="" >
+                              <Setter Property="Background" Value="{StaticResource LoginHint}"/>
+                           </DataTrigger>
+                         </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                 </TextBox>
+             </Grid>
+         </Viewbox>
+
+      <!-- ******************** Text box  ********************--> 
+
+        <Viewbox Grid.Row="3" Grid.Column="1" HorizontalAlignment="Left" Stretch="Uniform">
+          <Grid >
+               <Grid.Resources>
+                   <VisualBrush x:Key="LoginHint" Stretch="None" AlignmentX="left" AlignmentY="Top" >
+                        <VisualBrush.Transform>
+                            <TranslateTransform X="5" Y="3" />
+                        </VisualBrush.Transform>
+                        <VisualBrush.Visual>
+                            <Grid HorizontalAlignment="Left">
+                              <TextBlock FontFamily="SEGOEWP"  FontSize="10"   FontWeight="Normal" 
+                                   HorizontalAlignment="Left" VerticalAlignment="Center" Foreground="Gray" FontStyle="Italic" Opacity="1"  
+                                   Text="Enter Mail Nickname"/>
+                            </Grid>
+                        </VisualBrush.Visual>
+                    </VisualBrush>
+                </Grid.Resources>
+                <TextBox x:Name="G_MailName" MinWidth="150" Margin="2,2,2,2" >
+                  <TextBox.Style>
+                     <Style TargetType="{x:Type TextBox}">
+                       <Setter Property="Background" Value="Transparent"/>
+                         <Style.Triggers>
+                           <DataTrigger Binding="{Binding ElementName=G_MailName,Path=Text}" Value="" >
+                              <Setter Property="Background" Value="{StaticResource LoginHint}"/>
+                           </DataTrigger>
+                         </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                 </TextBox>
+             </Grid>
+         </Viewbox>
+
+       <!-- ******************** Text box  ********************--> 
+
+       <!-- ******************** Text box  ********************-->
+
+       <Viewbox Grid.Row="4" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="Uniform"  Grid.ColumnSpan="2" >
+          <Grid >
+               <Grid.Resources>
+                   <VisualBrush x:Key="LoginHint" Stretch="None" AlignmentX="left" AlignmentY="Top" >
+                        <VisualBrush.Transform>
+                            <TranslateTransform X="5" Y="3" />
+                        </VisualBrush.Transform>
+                        <VisualBrush.Visual>
+                            <Grid HorizontalAlignment="Left">
+                              <TextBlock FontFamily="SEGOEWP"  FontSize="10"   FontWeight="Normal" 
+                                   HorizontalAlignment="Left" VerticalAlignment="Center" Foreground="Gray" FontStyle="Italic" Opacity="1"  
+                                   Text="Enter Membership Rule"/>
+                            </Grid>
+                        </VisualBrush.Visual>
+                    </VisualBrush>
+                </Grid.Resources>
+                <TextBox x:Name="G_MembershipRule" MinWidth="300" Margin="2,2,2,2"  MinHeight="50" TextWrapping="Wrap" AcceptsReturn="True">
+                  <TextBox.Style>
+                     <Style TargetType="{x:Type TextBox}">
+                       <Setter Property="Background" Value="Transparent"/>
+                         <Style.Triggers>
+                           <DataTrigger Binding="{Binding ElementName=G_MembershipRule,Path=Text}" Value="" >
+                              <Setter Property="Background" Value="{StaticResource LoginHint}"/>
+                           </DataTrigger>
+                         </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                 </TextBox>
+             </Grid>
+         </Viewbox>
+
+       <!-- ******************** Text box  ********************-->
+
+       <Label x:Name="Create_Group_Result" Grid.Row="5" Grid.Column="1" FontSize="16"  VerticalAlignment="Center" HorizontalAlignment="Left" />
+
+         <Button x:Name="Create_Group" Grid.Row="5" Grid.Column="2" 
+                 Style="{StaticResource ButtonTemplate1}" 
+                 Content="Create Group" 
+                 HorizontalAlignment="Right" 
+                 Margin="5,5,5,5" 
+                 VerticalAlignment="Center" 
+                 Width="130"
+                 Height="40"
+                 FontSize="17" 
+                 />
+    </Grid>
+</Window>
+"@
+
 # Add assembly
 [void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework') 
 $Reader=(New-Object System.Xml.XmlNodeReader $xaml)
@@ -1620,6 +2080,7 @@ $xaml.SelectNodes("//*[@*[contains(translate(name(.), 'n', 'N'), 'Name')]]") | F
      New-Variable  -Name $_.Name -Value $Window.FindName($_.Name) -Force -ErrorAction SilentlyContinue
 }
 
+# Main Window's functions
 $window.Add_MouseDoubleClick({
      $window.set_windowstate("Normal")
 }) 
@@ -1649,8 +2110,8 @@ $Window.Add_Loaded({
 
 $Exit_btn.Add_Click({
      $window.Close()
-     Remove-Variable * -ErrorAction SilentlyContinue
-     Remove-Module * 
+     #Remove-Variable * -ErrorAction SilentlyContinue
+     #Remove-Module * 
      $error.Clear()
 })
 
@@ -1741,12 +2202,21 @@ $Login_Btn.Add_Click({
          #$MDevices = Get-ManagedDevices -IncludeEAS
          $Devices = Get-AADDevice
        
-         $USers | Select-Object @{name="Id";ex={$_.id}},@{ name="UserName";ex={$_.Displayname}},@{ name="UPN";ex={$_.userprincipalname}} | ForEach-Object {$Users_lv.addchild($_)}
+         $Users | Select-Object @{name="Id";ex={$_.id}},@{ name="UserName";ex={$_.Displayname}},@{ name="UPN";ex={$_.userprincipalname}} | ForEach-Object {$Users_lv.addchild($_)}
+
+         $Users_lv.Items.SortDescriptions.Clear()
+         $Users_lv.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("UserName", [System.ComponentModel.ListSortDirection]::Ascending))
        
          $Groups | Select-Object @{name="Id";ex={$_.id}},@{name="GroupName";ex={$_.Displayname}}, @{ name="isOnPrem";ex={if($_.onPremisesDomainName){"True"}else{"False"}}} ,@{ name="Mail";ex={$_.mail}}| ForEach-Object {
              $Groups_lv.addchild($_)
              $Groups_lv_d.addchild($_)
          }
+
+         $Groups_lv.Items.SortDescriptions.Clear()
+         $Groups_lv.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("GroupName", [System.ComponentModel.ListSortDirection]::Ascending))
+
+         $Groups_lv_d.Items.SortDescriptions.Clear()
+         $Groups_lv_d.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("GroupName", [System.ComponentModel.ListSortDirection]::Ascending))         
         
          <#
          $MDevices | Select-Object @{name="Id";ex={$_.id}},@{name="DeviceName";ex={$_.deviceName}}, @{ name="Vendor";ex={$_.manufacturer}}, 
@@ -1758,7 +2228,9 @@ $Login_Btn.Add_Click({
          @{ name="OS";ex={$_.operatingSystem}}, @{ name="Version";ex={$_.operatingSystemVersion}}, @{ name="LastSign";ex={(get-date -Date $_.approximateLastSignInDateTime -Format 'dd.MM.yyyy HH:mm:ss').ToString()}} | ForEach-Object {
              $Devices_lv.addchild($_)  
          }    
-         
+
+         $Devices_lv.Items.SortDescriptions.Clear()
+         $Devices_lv.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("DeviceName", [System.ComponentModel.ListSortDirection]::Ascending)) 
          
          $Subscription = Get-Subscription
          
@@ -2048,8 +2520,128 @@ $Groups_lv_d_Asc_sort.Add_Click({
     $Devices_lv.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("DeviceName", [System.ComponentModel.ListSortDirection]::Descending))
  })
 
-$window.ShowDialog() | Out-Null
+$Groups_lv_Refresh.Add_Click({
 
-Remove-Variable * -ErrorAction SilentlyContinue
-Remove-Module * 
+    $Groups_lv.Items.Clear()
+    $Groups_lv_d.Items.Clear()
+    
+    $Groups = Get-AADGroup
+
+     $Groups | Select-Object @{name="Id";ex={$_.id}},@{name="GroupName";ex={$_.Displayname}}, @{ name="isOnPrem";ex={if($_.onPremisesDomainName){"True"}else{"False"}}} ,@{ name="Mail";ex={$_.mail}}| ForEach-Object {
+        $Groups_lv.addchild($_)
+        $Groups_lv_d.addchild($_)
+    }
+
+    $Groups_lv.Items.SortDescriptions.Clear()
+    $Groups_lv.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("GroupName", [System.ComponentModel.ListSortDirection]::Ascending))
+
+    $Groups_lv_d.Items.SortDescriptions.Clear()
+    $Groups_lv_d.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("GroupName", [System.ComponentModel.ListSortDirection]::Ascending)) 
+})
+
+# Child Window's functions
+ $Add_grp_btn.Add_Click({
+
+     $Reader_g = (New-Object System.Xml.XmlNodeReader $grp_xaml)
+     $grp_Window   = [Windows.Markup.XamlReader]::Load( $Reader_g )
+     $grp_xaml.SelectNodes("//*[@*[contains(translate(name(.), 'n', 'N'), 'Name')]]") | ForEach-Object {
+        New-Variable  -Name $_.Name -Value $grp_Window.FindName($_.Name) -Force -ErrorAction SilentlyContinue
+     }
+
+     $Create_Group.Add_Click({
+        
+        if($G_DynamicMembership.IsChecked -and $G_Unified.IsChecked){
+
+            New-AADGroup -GroupType OfficeDynamic `
+                         -displayName ($G_displayName.Text).Trim() `
+                         -mailEnabled $G_mailEnabled.IsChecked `
+                         -mailNickname ($G_displayName.Text).Trim()`
+                         -membershipRule ($G_MembershipRule.Text).Trim() `
+                         -description ($G_Description.Text).Trim() `
+                         -securityEnabled $G_securityEnabled.IsChecked
+        }
+        elseif($G_DynamicMembership.IsChecked){
+                   
+            New-AADGroup -GroupType Security `
+                         -displayName ($G_displayName.Text).Trim() `
+                         -mailNickname ($G_displayName.Text).Trim()`
+                         -membershipRule ($G_MembershipRule.Text).Trim() `
+                         -description ($G_Description.Text).Trim() `
+                         -securityEnabled $G_securityEnabled.IsChecked
+        }
+        elseif($G_Unified.IsChecked){
+
+            New-AADGroup -GroupType Office `
+                         -displayName ($G_displayName.Text).Trim() `
+                         -mailEnabled $G_mailEnabled.IsChecked `
+                         -description ($G_Description.Text).Trim() `
+                         -mailNickname ($G_MailName.Text).Trim()
+        }
+        else{
+            [System.Windows.MessageBox]::Show('Choose Group Type' , 'Choose Group Type','OK','Warning')
+        }
+     })   
+    
+    $G_DynamicMembership.add_Checked({
+     
+         if(!($G_Unified.IsChecked)){
+        
+             $G_mailEnabled.IsEnabled  = $false
+             $G_MailName.IsEnabled     = $false
+
+         }
+     })
+
+    $G_DynamicMembership.add_UnChecked({
+     
+        $G_mailEnabled.IsEnabled  = $true
+        $G_MailName.IsEnabled     = $true
+
+     })
+
+    $G_Unified.add_Checked({
+     
+         if($G_DynamicMembership.IsChecked){
+        
+             $G_mailEnabled.IsEnabled  = $true
+             $G_MailName.IsEnabled     = $true
+
+         }
+     })
+
+     $G_Unified.add_UnChecked({
+     
+        if($G_DynamicMembership.IsChecked){
+       
+            $G_mailEnabled.IsEnabled  = $false
+            $G_MailName.IsEnabled     = $false
+
+        }
+        else{
+            $G_mailEnabled.IsEnabled  = $true
+            $G_MailName.IsEnabled     = $true           
+        }
+    })     
+     
+    $G_displayName.Add_TextChanged({
+        $Create_Group_Result.Visibility = "Hidden"
+    })
+
+     $base64 = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAVCAIAAADTi7lxAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAFiUAABYlAUlSJPAAAAAoSURBVDhPY/z//z8DNQATlKYYjBpEGIwaRBiMGkQYjBpEGAxbgxgY
+     AGPbAydP2uQjAAAAAElFTkSuQmCC"
+     $bitmap = New-Object System.Windows.Media.Imaging.BitmapImage
+     $bitmap.BeginInit()
+     $bitmap.StreamSource = [System.IO.MemoryStream][System.Convert]::FromBase64String($base64)
+     $bitmap.EndInit()
+     $bitmap.Freeze()
+	 $grp_Window.Icon = $bitmap
+     $grp_Window.ShowDialog()
+ })
+
+
+$async = $window.Dispatcher.InvokeAsync({$window.ShowDialog() | Out-Null})
+$async.Wait() | Out-Null
+
+#Remove-Variable * -ErrorAction SilentlyContinue
+#Remove-Module * 
 $error.Clear()
