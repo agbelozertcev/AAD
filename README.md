@@ -1,6 +1,6 @@
 # AAD Object Management Script
 
-This PowerShell script demonstrate how to use the Microsoft Graph API to manage AAD objects.  This script allows you to add users and devices to AAD groups, create and delete groups. The UI is created using WPF(XAML).
+This PowerShell script demonstrate how to use the Microsoft Graph API to manage AAD objects.  This script allows you to add users and devices to AAD groups, create and delete groups and shows some information about your tenant. The UI is created using WPF(XAML).
 
 The script is licensed "as-is."
 
