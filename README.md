@@ -5,7 +5,7 @@ This PowerShell script demonstrate how to use the Microsoft Graph API to manage 
 
 #### Disclaimer
 
-This script can retrieve and change information from your AAD tenant. Understand the impact of this script prior to running it. Script should be run using a non-production or "test" tenant account. The script is provided AS IS without warranty of any kind.
+This script can retrieve and change information from your AAD tenant. Understand the impact of this script prior to running it. This script should be run using a non-production or "test" tenant account. The script is provided AS IS without warranty of any kind.
 
 
 ## Prerequisites
