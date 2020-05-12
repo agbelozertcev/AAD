@@ -38,5 +38,8 @@ If you want to modify this script with the ability to create users, you should c
 $clientId = "d1ddf0e4-d672-4dae-b554-9d5bdfd93547"
 ```
 
+## Additional resources
+
+[Microsoft Graph API documentation](https://docs.microsoft.com/en-us/graph/overview)
 
 
