@@ -41,5 +41,6 @@ $clientId = "d1ddf0e4-d672-4dae-b554-9d5bdfd93547"
 ## Additional resources
 
 [Microsoft Graph API documentation](https://docs.microsoft.com/en-us/graph/overview)
+[Microsoft Graph permissions reference](https://docs.microsoft.com/en-us/graph/permissions-reference)
 
 
