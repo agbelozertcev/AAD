@@ -22,7 +22,7 @@ After the prerequisites are installed or met, perform the following steps to use
 
 * Download the contents of the repository to your local Windows machine
 * Extract the files to a local folder (e.g. C:\App)
-* Run PowerShell x64 from the start menu
+* Run PowerShell console from the start menu
 * Browse to the directory (e.g. cd  C:\App)
 
 Example script usage:
