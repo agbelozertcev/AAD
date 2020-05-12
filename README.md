@@ -11,9 +11,9 @@ This script can retrieve and change information from your AAD tenant. Understand
 
 ## Prerequisites
 
-* Install the AzureAD PowerShell module by running 'Install-Module AzureAD' or 'Install-Module AzureADPreview' from an elevated    PowerShell prompt
+* Install the AzureAD PowerShell module by running 'Install-Module AzureAD' or 'Install-Module AzureADPreview' from an elevated     PowerShell prompt
 * PowerShell v5.0 on Windows 10 x64 (PowerShell v4.0 is a minimum requirement for the script to function correctly)
-* First time usage of these script requires a Global Administrator of the Tenant to accept the permissions of the application
+* First time usage of this script requires a Global Administrator of the AAD tenant to accept the permissions of the application
 
 
 ## Getting Started
@@ -28,3 +28,15 @@ After the prerequisites are installed or met, perform the following steps to use
 Example script usage:
 To use the script, from C:\App, run "cd C:\App"
 Once in the folder run .\App.ps1 
+
+## Limitations
+
+This script uses the Microsoft Intune PowerShell application with its native permissions, for example you cannot create a user using this application because it does not have appropriate permissions (User.ReadWrite.All, Directory.ReadWrite.All). 
+If you want to modify this script with the ability to create users, you should create your own application with these permissions and replace the $clientId variable in the Get-AuthToken function with the id of the application that you created.
+
+```
+$clientId = "d1ddf0e4-d672-4dae-b554-9d5bdfd93547"
+```
+
+
+
