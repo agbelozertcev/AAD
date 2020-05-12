@@ -10,19 +10,19 @@ This script can retrieve and change information from your AAD tenant. Understand
 
 ## Prerequisites
 
-1. Install the AzureAD PowerShell module by running 'Install-Module AzureAD' or 'Install-Module AzureADPreview' from an elevated    PowerShell prompt
-2. PowerShell v5.0 on Windows 10 x64 (PowerShell v4.0 is a minimum requirement for the script to function correctly)
-3. First time usage of these script requires a Global Administrator of the Tenant to accept the permissions of the application
+* Install the AzureAD PowerShell module by running 'Install-Module AzureAD' or 'Install-Module AzureADPreview' from an elevated    PowerShell prompt
+* PowerShell v5.0 on Windows 10 x64 (PowerShell v4.0 is a minimum requirement for the script to function correctly)
+* First time usage of these script requires a Global Administrator of the Tenant to accept the permissions of the application
 
 
 ## Getting Started
 
 After the prerequisites are installed or met, perform the following steps to use this script:
 
-1. Download the contents of the repository to your local Windows machine
-2. Extract the files to a local folder (e.g. C:\App)
-3. Run PowerShell x64 from the start menu
-4. Browse to the directory (e.g. cd  C:\App)
+* Download the contents of the repository to your local Windows machine
+* Extract the files to a local folder (e.g. C:\App)
+* Run PowerShell x64 from the start menu
+* Browse to the directory (e.g. cd  C:\App)
 
 Example script usage:
 To use the script, from C:\App, run "cd C:\App"
