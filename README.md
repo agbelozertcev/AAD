@@ -2,11 +2,10 @@
 
 This PowerShell script demonstrate how to use the Microsoft Graph API to manage AAD objects.  This script allows you to add users and devices to AAD groups, create and delete groups and shows some information about your tenant. The UI is created using WPF(XAML).
 
-The script is licensed "as-is."
 
 #### Disclaimer
 
-This script can retrieve and change information from your AAD tenant. Understand the impact of this script prior to running it. Script should be run using a non-production or "test" tenant account. 
+This script can retrieve and change information from your AAD tenant. Understand the impact of this script prior to running it. Script should be run using a non-production or "test" tenant account. The script is provided AS IS without warranty of any kind.
 
 
 ## Prerequisites
