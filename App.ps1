@@ -752,6 +752,7 @@ function New-Chart() {
     $ChartArea = New-Object System.Windows.Forms.DataVisualization.Charting.ChartArea
     $Chart.ChartAreas.Add($ChartArea)
     $Chart.ChartAreas[0].Area3DStyle.Enable3D = "True"
+    $Chart.ChartAreas[0].Area3DStyle.Inclination = 50
     [void]$Chart.Series.Add("Data") 
  
     
@@ -779,6 +780,20 @@ function New-Chart() {
     $script:hash.Stream = $Stream.GetBuffer()
     $Stream.Dispose()
 }
+
+ function New-Point ([double]$x, [double]$y,$Width, $Height){
+  
+    $xmin = 0
+    $xmax = 6
+    $ymin = -2
+    $ymax = 2
+       
+    [double]$resX = ($x - $xmin) * $Width / ($xmax - $xmin)
+    [double]$resY = $Height – ($y - $ymin) * $Height / ($ymax - $ymin)
+    $pt = [System.Windows.Point]::New($resX,$resY)
+    return $pt
+   
+  }
 
 function Get-SKUFrendlyName(){
     param(
@@ -1360,17 +1375,15 @@ function Get-SKUFrendlyName(){
 
      </Grid>
      <Label  Grid.Row="0" Grid.Column="1" Content="Subscribed SKUs" FontSize="17" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="15,3,0,0"/>
-     <Grid Grid.Row="0" Grid.Column="1" ShowGridLines="True" Margin="15,45,5,0">
+     <Grid Grid.Row="0" Grid.Column="1"  Margin="15,45,5,0">
      
         <ListView x:Name="SKU_lv" Grid.Column="0" Margin="0,0,5,0" FontSize="15" Foreground="Black"  ItemsSource="{Binding}" IsSynchronizedWithCurrentItem="True" Panel.ZIndex="1" BorderThickness="0">
-            <ListView.Resources>
+             <ListView.Resources>
                 <Style TargetType="{x:Type GridViewColumnHeader}">
                      <Setter Property="FontSize" Value="15"/>
                 </Style>
   
-            </ListView.Resources>
-
-      
+             </ListView.Resources>
 
              <ListView.View>
                      <GridView>
@@ -1382,6 +1395,12 @@ function Get-SKUFrendlyName(){
              </ListView.View>
          </ListView>       
      </Grid>
+
+     <Grid  Margin="0" x:Name ="Sign_grd" ClipToBounds="True" Background="Transparent" Grid.Row="0" Grid.Column="2">
+         
+         <Canvas  Margin="0" x:Name ="chartCanvas" ClipToBounds="True" Background="Transparent"/>
+      
+      </Grid>
 
      <Image Grid.Row="2" Grid.Column="0" x:Name="Chart_usr" /> 
      <Image Grid.Row="2" Grid.Column="1" x:Name="Chart_grp" />
@@ -2127,7 +2146,7 @@ function Get-SKUFrendlyName(){
                             <Grid HorizontalAlignment="Left">
                               <TextBlock FontFamily="SEGOEWP"  FontSize="10"   FontWeight="Normal" 
                                    HorizontalAlignment="Left" VerticalAlignment="Center" Foreground="Gray" FontStyle="Italic" Opacity="1"  
-                                   Text="Enter Membership Rule"/>
+                                   Text="Enter Membership Rule, for example: &#x0d;&#x0a;(user.displayName -contains &quot;Donald Duck&quot;) or &#x0d;&#x0a;(device.displayName -contains &quot;Android&quot;)"/>
                             </Grid>
                         </VisualBrush.Visual>
                     </VisualBrush>
