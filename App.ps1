@@ -1,5 +1,5 @@
 ﻿<#
-v 1.0.5
+v 1.0.6
 #>
 
 [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
@@ -344,6 +344,44 @@ $Resource = "groups"
 
 }
 
+function Remove-AADGroup(){
+
+
+    [cmdletbinding()]
+    
+    param
+    (
+        $GroupId
+    )
+    
+    $graphApiVersion = "v1.0"
+    $Resource = "groups"
+        
+        try {
+    
+        $uri = "https://graph.microsoft.com/$graphApiVersion/$Resource/$GroupId"
+    
+    
+        Invoke-RestMethod -Uri $uri -Headers $authToken -Method Delete -ContentType "application/json"
+    
+        }
+    
+        catch {
+    
+        $ex = $_.Exception
+        $errorResponse = $ex.Response.GetResponseStream()
+        $reader = New-Object System.IO.StreamReader($errorResponse)
+        $reader.BaseStream.Position = 0
+        $reader.DiscardBufferedData()
+        $responseBody = $reader.ReadToEnd();
+        #Write-Host "Response content:`n$responseBody" -f Red
+        #SWrite-Error "Request to $Uri failed with HTTP Status $($ex.Response.StatusCode) $($ex.Response.StatusDescription)"
+        [System.Windows.MessageBox]::Show('Remove-AADGroup  ' + $responseBody , 'Request failed','OK','Error')
+    
+        }
+    
+ }
+
 function New-AADGroup(){
 
 
@@ -445,11 +483,8 @@ function New-AADGroup(){
 
           }          
           
-
                 Invoke-RestMethod -Uri $uri -Headers $authToken -Method Post -Body $Json -ContentType "application/json"
-                $global:Create_Group_Result.Visibility = "Visible"
-                $global:Create_Group_Result.Content="The group was successfully created"
-                $global:Create_Group_Result.Foreground="Green"
+
         }
     
         catch {
@@ -661,7 +696,7 @@ function Get-ManagedDevices(){
         }
 }
     
-function Show-Toast{
+function Show-Toast(){
 
 [cmdletbinding()]
 
@@ -745,7 +780,7 @@ function New-Chart() {
     $Stream.Dispose()
 }
 
-function ConvertSKUto-FrendlyName{
+function Get-SKUFrendlyName(){
     param(
         [string]$SKU
     )
@@ -874,6 +909,27 @@ function ConvertSKUto-FrendlyName{
     default { $SKU }
     }
     
+ }
+
+ function Update-Groups(){
+
+    $Groups_lv.Items.Clear()
+    $Groups_lv_d.Items.Clear()
+    
+    $Groups = Get-AADGroup
+
+     $Groups | Select-Object @{name="Id";ex={$_.id}},@{name="GroupName";ex={$_.Displayname}}, @{ name="isOnPrem";ex={if($_.onPremisesDomainName){"True"}else{"False"}}} ,@{ name="Mail";ex={$_.mail}}| ForEach-Object {
+        $Groups_lv.addchild($_)
+        $Groups_lv_d.addchild($_)
+    }
+
+    $Groups_lv.Items.SortDescriptions.Clear()
+    $Groups_lv.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("GroupName", [System.ComponentModel.ListSortDirection]::Ascending))
+
+    $Groups_lv_d.Items.SortDescriptions.Clear()
+    $Groups_lv_d.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("GroupName", [System.ComponentModel.ListSortDirection]::Ascending)) 
+
+
  }
 
 #endregion functions
@@ -1390,6 +1446,8 @@ function ConvertSKUto-FrendlyName{
 
  <!-- ********************** _Users End of Header  ********************-->
 
+ <!-- ********************** _Users Group Buttons  ********************-->
+
      <Button x:Name = "Add_grp_Btn" Grid.Row="2" Grid.Column="2" FontSize="15" Background="White" Foreground="Black" Style="{StaticResource ButtonTemplate}" Margin ="5,5,5,5" >
      <Button.Content>
          <Viewbox StretchDirection="DownOnly" Stretch="Uniform">
@@ -1405,6 +1463,8 @@ function ConvertSKUto-FrendlyName{
          </Viewbox>
      </Button.Content>
      </Button>
+     
+ <!-- ********************** _Users End of Group Buttons  ********************-->
 
  <!-- ********************** _Users Tables  ********************-->
 
@@ -1429,6 +1489,9 @@ function ConvertSKUto-FrendlyName{
 
      <ListView x:Name="Users_lv" Grid.Column="0" Margin="0,0,5,0" FontSize="12" ItemsSource="{Binding}" IsSynchronizedWithCurrentItem="True" BorderThickness="0">
          <ListView.Resources>
+             <ContextMenu x:Key="ItemContextMenu_Users_lv">
+                 <MenuItem Header="Properties"></MenuItem>
+             </ContextMenu>           
              <Style TargetType="{x:Type GridViewColumnHeader}">
                  <Setter Property="HorizontalContentAlignment" Value="Left"/>
                  <Setter Property="Background" Value="SteelBlue"/>
@@ -1437,7 +1500,11 @@ function ConvertSKUto-FrendlyName{
                  <Setter Property="FontSize" Value="14"/>
              </Style>
          </ListView.Resources>
-
+         <ListView.ItemContainerStyle>
+         <Style TargetType="{x:Type ListViewItem}">
+             <Setter Property="ContextMenu" Value="{StaticResource ItemContextMenu_Users_lv}"/>
+          </Style>
+         </ListView.ItemContainerStyle>
          <ListView.View>
              <GridView AllowsColumnReorder="true">
                  <GridView.ColumnHeaderContextMenu>
@@ -1470,7 +1537,10 @@ function ConvertSKUto-FrendlyName{
 
      <ListView x:Name="Groups_lv" Grid.Column="1"  FontSize="12" ItemsSource="{Binding}" IsSynchronizedWithCurrentItem="True" ScrollViewer.CanContentScroll="True" BorderThickness="0" >
          <ListView.Resources>
-                 <Style TargetType="{x:Type GridViewColumnHeader}">
+             <ContextMenu x:Key="ItemContextMenu_Groups_lv">
+                 <MenuItem Header="Properties"></MenuItem>
+             </ContextMenu>           
+            <Style TargetType="{x:Type GridViewColumnHeader}">
                  <Setter Property="HorizontalContentAlignment" Value="Left"/>
                  <Setter Property="Background" Value="SteelBlue"/>
                  <Setter Property="Foreground" Value="White"/>
@@ -1478,7 +1548,11 @@ function ConvertSKUto-FrendlyName{
                  <Setter Property="FontSize" Value="14"/>
              </Style>
          </ListView.Resources>
-
+         <ListView.ItemContainerStyle>
+         <Style TargetType="{x:Type ListViewItem}">
+             <Setter Property="ContextMenu" Value="{StaticResource ItemContextMenu_Groups_lv}"/>
+          </Style>
+         </ListView.ItemContainerStyle>
          <ListView.View>
              <GridView AllowsColumnReorder="true" ColumnHeaderToolTip="Authors">
 
@@ -1564,22 +1638,22 @@ function ConvertSKUto-FrendlyName{
  <!-- ************************* _Devices grid  ***********************-->
   
  <Grid x:Name = "Devices_grd" Grid.Row="0" Grid.Column="1">
-     <Grid.RowDefinitions>
-         <RowDefinition Height="0.15*"/>
-         <RowDefinition Height="0.02*"/>
-         <RowDefinition Height="0.1*"/>
-         <RowDefinition Height="0.02*"/>
-         <RowDefinition />
-         <RowDefinition Height="0.1*"/>
-         <RowDefinition Height="0.05*"/>
-     </Grid.RowDefinitions>
-     <Grid.ColumnDefinitions>
-         <ColumnDefinition Width="0.02*"/>
-         <ColumnDefinition />
-         <ColumnDefinition Width="0.1*"/>
-         <ColumnDefinition Width="0.1*"/>
-         <ColumnDefinition Width="0.02*"/>
-     </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+        <RowDefinition Height="0.15*"/>
+        <RowDefinition Height="0.02*"/>
+        <RowDefinition Height="0.1*"/>
+        <RowDefinition Height="0.02*"/>
+        <RowDefinition />
+        <RowDefinition Height="0.1*"/>
+        <RowDefinition Height="0.05*"/>
+    </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="0.02*"/>
+        <ColumnDefinition />
+        <ColumnDefinition Width="0.2*"/>
+        <ColumnDefinition Width="0.2*"/>
+        <ColumnDefinition Width="0.02*"/>
+    </Grid.ColumnDefinitions>
 
 
  <!-- ********************** _Devices Header  ********************-->
@@ -1592,6 +1666,26 @@ function ConvertSKUto-FrendlyName{
      </Grid>
 
  <!-- ********************** _Devices End of Header  ********************-->
+
+ <!-- ********************** _Devices Group Buttons  ********************-->
+
+    <Button x:Name = "Add_grp_d_Btn" Grid.Row="2" Grid.Column="2" FontSize="15" Background="White" Foreground="Black" Style="{StaticResource ButtonTemplate}" Margin ="5,5,5,5" >
+        <Button.Content>
+            <Viewbox StretchDirection="DownOnly" Stretch="Uniform">
+                <ContentControl Content="Create Group"/>
+            </Viewbox>
+        </Button.Content>
+    </Button>
+
+    <Button x:Name = "Del_grp_d_Btn" Grid.Row="2" Grid.Column="3" FontSize="15" Background="White" Foreground="Black" Style="{StaticResource ButtonTemplate}" Margin ="5,5,5,5" >
+        <Button.Content>
+            <Viewbox StretchDirection="DownOnly" Stretch="Uniform">
+                <ContentControl Content="Delete Group(s)"/>
+            </Viewbox>
+        </Button.Content>
+    </Button>
+
+ <!-- ********************** _Devices End of Group Buttons  ********************-->
 
  <!-- ********************** _Devices Tables  ********************-->
 
@@ -2081,15 +2175,15 @@ $xaml.SelectNodes("//*[@*[contains(translate(name(.), 'n', 'N'), 'Name')]]") | F
 }
 
 # Main Window's functions
-$window.Add_MouseDoubleClick({
+ $window.Add_MouseDoubleClick({
      $window.set_windowstate("Normal")
 }) 
 
-$Window.Add_MouseLeftButtonDown({
+ $Window.Add_MouseLeftButtonDown({
      $window.DragMove()
 })
 
-$Window.Add_Loaded({
+ $Window.Add_Loaded({
      $Main_grd.Visibility     = "Visible"
      $Users_grd.Visibility    = "Hidden"
      $Devices_grd.Visibility  = "Hidden"
@@ -2108,22 +2202,22 @@ $Window.Add_Loaded({
      $Login_tb.Text = "admin@M365x898520.onmicrosoft.com"
 }) 
 
-$Exit_btn.Add_Click({
+ $Exit_btn.Add_Click({
      $window.Close()
      #Remove-Variable * -ErrorAction SilentlyContinue
      #Remove-Module * 
      $error.Clear()
 })
 
-$Min_btn.Add_Click({
+ $Min_btn.Add_Click({
      $window.set_windowstate("Minimized")
 })
 
-$Max_btn.Add_Click({
+ $Max_btn.Add_Click({
      $window.set_windowstate("Maximized")
 })
 
-$Main_Btn.Add_Click({
+ $Main_Btn.Add_Click({
      $Main_grd.Visibility    = "Visible"
      $Users_grd.Visibility   = "Hidden"
      $Devices_grd.Visibility = "Hidden"
@@ -2142,13 +2236,13 @@ $Users_Btn.Add_Click({
       
 })
 
-$Devices_Btn.Add_Click({
+ $Devices_Btn.Add_Click({
      $Main_grd.Visibility    = "Hidden"
      $Users_grd.Visibility   = "Hidden"
      $Devices_grd.Visibility = "Visible"
 })
 
-$Login_Btn.Add_Click({
+ $Login_Btn.Add_Click({
 
 
     if($global:authToken){
@@ -2234,7 +2328,7 @@ $Login_Btn.Add_Click({
          
          $Subscription = Get-Subscription
          
-         $Subscription | Select-Object @{name="SKU";ex={ ConvertSKUto-FrendlyName -SKU $_.skuPartNumber }},@{name="Enabled";ex={$_.prepaidUnits.enabled}} | ForEach-Object{
+         $Subscription | Select-Object @{name="SKU";ex={ Get-SKUFrendlyName -SKU $_.skuPartNumber }},@{name="Enabled";ex={$_.prepaidUnits.enabled}} | ForEach-Object{
             $SKU_lv.addchild($_) 
             #$_.skuPartNumber; $_.prepaidUnits.enabled; $_.prepaidUnits.suspended;$_.prepaidUnits.warning
         
@@ -2319,7 +2413,7 @@ $Add_btn.Add_Click({
      }
 })
 
-$Remove_btn.Add_Click({
+ $Remove_btn.Add_Click({
 
      if(!($Users_lv.SelectedItems)){
          [System.Windows.MessageBox]::Show('No user selected' , 'No user selected','OK','Information')
@@ -2416,7 +2510,7 @@ $Remove_btn_d.Add_Click({
     }
 })    
 
-$Users_lv_SelectAll.Add_Checked({
+ $Users_lv_SelectAll.Add_Checked({
     foreach($U_item in $Users_lv.Items){
                    
         $Users_lv.SelectedItems.Add($U_item);          
@@ -2424,7 +2518,7 @@ $Users_lv_SelectAll.Add_Checked({
 
 })
 
-$Users_lv_SelectAll.Add_UnChecked({
+ $Users_lv_SelectAll.Add_UnChecked({
     foreach($U_item in $Users_lv.Items){
                    
         $Users_lv.SelectedItems.Remove($U_item);          
@@ -2432,7 +2526,7 @@ $Users_lv_SelectAll.Add_UnChecked({
 
 })
 
-$Groups_lv_SelectAll.Add_Checked({
+ $Groups_lv_SelectAll.Add_Checked({
     foreach($G_item in $Groups_lv.Items){
                    
         $Groups_lv.SelectedItems.Add($G_item);          
@@ -2448,7 +2542,7 @@ $Groups_lv_SelectAll.Add_UnChecked({
 
 })
 
-$Groups_lv_d_SelectAll.Add_Checked({
+ $Groups_lv_d_SelectAll.Add_Checked({
     foreach($G_d_item in $Groups_lv_d.Items){
                    
         $Groups_lv_d.SelectedItems.Add($G_d_item);          
@@ -2456,7 +2550,7 @@ $Groups_lv_d_SelectAll.Add_Checked({
 
 })
 
-$Groups_lv_d_SelectAll.Add_UnChecked({
+ $Groups_lv_d_SelectAll.Add_UnChecked({
     foreach($G_d_item in  $Groups_lv_d.Items){
                    
         $Groups_lv_d.SelectedItems.Remove($G_d_item);          
@@ -2464,7 +2558,7 @@ $Groups_lv_d_SelectAll.Add_UnChecked({
 
 })
 
-$Devices_lv_SelectAll.Add_Checked({
+ $Devices_lv_SelectAll.Add_Checked({
     foreach($D_item in $Devices_lv.Items){
                    
         $Devices_lv.SelectedItems.Add($D_item);          
@@ -2472,7 +2566,7 @@ $Devices_lv_SelectAll.Add_Checked({
 
 })
 
-$Devices_lv_SelectAll.Add_UnChecked({
+ $Devices_lv_SelectAll.Add_UnChecked({
     foreach($D_item in $Devices_lv.Items){
                    
         $Devices_lv.SelectedItems.Remove($D_item);          
@@ -2480,7 +2574,7 @@ $Devices_lv_SelectAll.Add_UnChecked({
 
 })
 
-$Groups_lv_d_Asc_sort.Add_Click({
+ $Groups_lv_d_Asc_sort.Add_Click({
     $Groups_lv_d.Items.SortDescriptions.Clear()
     $Groups_lv_d.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("GroupName", [System.ComponentModel.ListSortDirection]::Ascending))
  })
@@ -2520,23 +2614,75 @@ $Groups_lv_d_Asc_sort.Add_Click({
     $Devices_lv.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("DeviceName", [System.ComponentModel.ListSortDirection]::Descending))
  })
 
-$Groups_lv_Refresh.Add_Click({
+ $Groups_lv_Refresh.Add_Click({
+    Update-Groups
+ })
 
-    $Groups_lv.Items.Clear()
-    $Groups_lv_d.Items.Clear()
-    
-    $Groups = Get-AADGroup
+ $Del_grp_Btn.Add_Click({
 
-     $Groups | Select-Object @{name="Id";ex={$_.id}},@{name="GroupName";ex={$_.Displayname}}, @{ name="isOnPrem";ex={if($_.onPremisesDomainName){"True"}else{"False"}}} ,@{ name="Mail";ex={$_.mail}}| ForEach-Object {
-        $Groups_lv.addchild($_)
-        $Groups_lv_d.addchild($_)
+    $Items = @()
+
+    if(!($Groups_lv.SelectedItems)){
+        [System.Windows.MessageBox]::Show('No group selected' , 'No group selected','OK','Information')
+    }
+    else{
+       
+        foreach($Group in $Groups_lv.SelectedItems){
+            $Obj = [PSCustomObject]@{
+                id        = $Group.id
+                GroupName = $Group.GroupName
+            }
+            [Array]$Items +=$Obj
+        }    
+
+        foreach($Item in $Items){
+
+             try{
+                 Remove-AADGroup -GroupId  $Item.id 
+                 
+                 Show-Toast -Title "The AAD object has been changed" -Message "$($Item.GroupName) was removed"
+             }
+             catch{
+
+             } 
+
+             Update-Groups
+         }
+    }
+ })
+ 
+ $Del_grp_d_Btn.Add_Click({
+
+    $Items = @()   
+
+    if(!($Groups_lv_d.SelectedItems)){
+        [System.Windows.MessageBox]::Show('No group selected' , 'No group selected','OK','Information')
+    }
+    else{
+       
+        foreach($Group in $Groups_lv_d.SelectedItems){
+            $Obj = [PSCustomObject]@{
+                id        = $Group.id
+                GroupName = $Group.GroupName
+            }
+            [Array]$Items +=$Obj
+        }    
+
+        foreach($Item in $Items){
+
+             try{
+                 Remove-AADGroup -GroupId  $Item.id 
+                 
+                 Show-Toast -Title "The AAD object has been changed" -Message "$($Item.GroupName) was removed"
+             }
+             catch{
+
+             } 
+
+             Update-Groups
+         }
     }
 
-    $Groups_lv.Items.SortDescriptions.Clear()
-    $Groups_lv.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("GroupName", [System.ComponentModel.ListSortDirection]::Ascending))
-
-    $Groups_lv_d.Items.SortDescriptions.Clear()
-    $Groups_lv_d.Items.SortDescriptions.Add([System.ComponentModel.SortDescription]::new("GroupName", [System.ComponentModel.ListSortDirection]::Ascending)) 
 })
 
 # Child Window's functions
@@ -2552,13 +2698,24 @@ $Groups_lv_Refresh.Add_Click({
         
         if($G_DynamicMembership.IsChecked -and $G_Unified.IsChecked){
 
-            New-AADGroup -GroupType OfficeDynamic `
-                         -displayName ($G_displayName.Text).Trim() `
-                         -mailEnabled $G_mailEnabled.IsChecked `
-                         -mailNickname ($G_displayName.Text).Trim()`
-                         -membershipRule ($G_MembershipRule.Text).Trim() `
-                         -description ($G_Description.Text).Trim() `
-                         -securityEnabled $G_securityEnabled.IsChecked
+            try{
+                New-AADGroup -GroupType OfficeDynamic `
+                            -displayName ($G_displayName.Text).Trim() `
+                            -mailEnabled $G_mailEnabled.IsChecked `
+                            -mailNickname ($G_displayName.Text).Trim()`
+                            -membershipRule ($G_MembershipRule.Text).Trim() `
+                            -description ($G_Description.Text).Trim() `
+                            -securityEnabled $G_securityEnabled.IsChecked
+                 
+                 $Create_Group_Result.Visibility = "Visible"
+                 $Create_Group_Result.Content="The group was successfully created"
+                 $Create_Group_Result.Foreground="Green"
+
+                 Update-Groups
+             }
+             catch{
+
+             }            
         }
         elseif($G_DynamicMembership.IsChecked){
                    
@@ -2569,20 +2726,31 @@ $Groups_lv_Refresh.Add_Click({
                          -description ($G_Description.Text).Trim() `
                          -securityEnabled $G_securityEnabled.IsChecked
         }
-        elseif($G_Unified.IsChecked){
+         elseif($G_Unified.IsChecked){
 
-            New-AADGroup -GroupType Office `
-                         -displayName ($G_displayName.Text).Trim() `
-                         -mailEnabled $G_mailEnabled.IsChecked `
-                         -description ($G_Description.Text).Trim() `
-                         -mailNickname ($G_MailName.Text).Trim()
+             try{
+                 New-AADGroup -GroupType Office `
+                            -displayName ($G_displayName.Text).Trim() `
+                            -mailEnabled $G_mailEnabled.IsChecked `
+                            -description ($G_Description.Text).Trim() `
+                            -mailNickname ($G_MailName.Text).Trim()
+             
+                 $Create_Group_Result.Visibility = "Visible"
+                 $Create_Group_Result.Content="The group was successfully created"
+                 $Create_Group_Result.Foreground="Green"
+                 
+                 Update-Groups
+             }
+             catch{
+
+             }             
         }
-        else{
+         else{
             [System.Windows.MessageBox]::Show('Choose Group Type' , 'Choose Group Type','OK','Warning')
         }
      })   
     
-    $G_DynamicMembership.add_Checked({
+     $G_DynamicMembership.add_Checked({
      
          if(!($G_Unified.IsChecked)){
         
@@ -2592,14 +2760,14 @@ $Groups_lv_Refresh.Add_Click({
          }
      })
 
-    $G_DynamicMembership.add_UnChecked({
+     $G_DynamicMembership.add_UnChecked({
      
         $G_mailEnabled.IsEnabled  = $true
         $G_MailName.IsEnabled     = $true
 
      })
 
-    $G_Unified.add_Checked({
+     $G_Unified.add_Checked({
      
          if($G_DynamicMembership.IsChecked){
         
@@ -2621,11 +2789,11 @@ $Groups_lv_Refresh.Add_Click({
             $G_mailEnabled.IsEnabled  = $true
             $G_MailName.IsEnabled     = $true           
         }
-    })     
+     })     
      
-    $G_displayName.Add_TextChanged({
+     $G_displayName.Add_TextChanged({
         $Create_Group_Result.Visibility = "Hidden"
-    })
+     })
 
      $base64 = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAVCAIAAADTi7lxAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAFiUAABYlAUlSJPAAAAAoSURBVDhPY/z//z8DNQATlKYYjBpEGIwaRBiMGkQYjBpEGAxbgxgY
      AGPbAydP2uQjAAAAAElFTkSuQmCC"
@@ -2636,6 +2804,103 @@ $Groups_lv_Refresh.Add_Click({
      $bitmap.Freeze()
 	 $grp_Window.Icon = $bitmap
      $grp_Window.ShowDialog()
+ })
+
+ $Add_grp_d_Btn.Add_Click({
+    $Reader_g = (New-Object System.Xml.XmlNodeReader $grp_xaml)
+    $grp_Window   = [Windows.Markup.XamlReader]::Load( $Reader_g )
+    $grp_xaml.SelectNodes("//*[@*[contains(translate(name(.), 'n', 'N'), 'Name')]]") | ForEach-Object {
+       New-Variable  -Name $_.Name -Value $grp_Window.FindName($_.Name) -Force -ErrorAction SilentlyContinue
+    }
+
+    $Create_Group.Add_Click({
+       
+       if($G_DynamicMembership.IsChecked -and $G_Unified.IsChecked){
+
+           New-AADGroup -GroupType OfficeDynamic `
+                        -displayName ($G_displayName.Text).Trim() `
+                        -mailEnabled $G_mailEnabled.IsChecked `
+                        -mailNickname ($G_displayName.Text).Trim()`
+                        -membershipRule ($G_MembershipRule.Text).Trim() `
+                        -description ($G_Description.Text).Trim() `
+                        -securityEnabled $G_securityEnabled.IsChecked
+       }
+       elseif($G_DynamicMembership.IsChecked){
+                  
+           New-AADGroup -GroupType Security `
+                        -displayName ($G_displayName.Text).Trim() `
+                        -mailNickname ($G_displayName.Text).Trim()`
+                        -membershipRule ($G_MembershipRule.Text).Trim() `
+                        -description ($G_Description.Text).Trim() `
+                        -securityEnabled $G_securityEnabled.IsChecked
+       }
+       elseif($G_Unified.IsChecked){
+
+           New-AADGroup -GroupType Office `
+                        -displayName ($G_displayName.Text).Trim() `
+                        -mailEnabled $G_mailEnabled.IsChecked `
+                        -description ($G_Description.Text).Trim() `
+                        -mailNickname ($G_MailName.Text).Trim()
+       }
+       else{
+           [System.Windows.MessageBox]::Show('Choose Group Type' , 'Choose Group Type','OK','Warning')
+       }
+    })   
+   
+   $G_DynamicMembership.add_Checked({
+    
+        if(!($G_Unified.IsChecked)){
+       
+            $G_mailEnabled.IsEnabled  = $false
+            $G_MailName.IsEnabled     = $false
+
+        }
+    })
+
+   $G_DynamicMembership.add_UnChecked({
+    
+       $G_mailEnabled.IsEnabled  = $true
+       $G_MailName.IsEnabled     = $true
+
+    })
+
+   $G_Unified.add_Checked({
+    
+        if($G_DynamicMembership.IsChecked){
+       
+            $G_mailEnabled.IsEnabled  = $true
+            $G_MailName.IsEnabled     = $true
+
+        }
+    })
+
+    $G_Unified.add_UnChecked({
+    
+       if($G_DynamicMembership.IsChecked){
+      
+           $G_mailEnabled.IsEnabled  = $false
+           $G_MailName.IsEnabled     = $false
+
+       }
+       else{
+           $G_mailEnabled.IsEnabled  = $true
+           $G_MailName.IsEnabled     = $true           
+       }
+   })     
+    
+   $G_displayName.Add_TextChanged({
+       $Create_Group_Result.Visibility = "Hidden"
+   })
+
+    $base64 = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAVCAIAAADTi7lxAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAFiUAABYlAUlSJPAAAAAoSURBVDhPY/z//z8DNQATlKYYjBpEGIwaRBiMGkQYjBpEGAxbgxgY
+    AGPbAydP2uQjAAAAAElFTkSuQmCC"
+    $bitmap = New-Object System.Windows.Media.Imaging.BitmapImage
+    $bitmap.BeginInit()
+    $bitmap.StreamSource = [System.IO.MemoryStream][System.Convert]::FromBase64String($base64)
+    $bitmap.EndInit()
+    $bitmap.Freeze()
+    $grp_Window.Icon = $bitmap
+    $grp_Window.ShowDialog()
  })
 
 
